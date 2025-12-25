@@ -1,36 +1,32 @@
-import { X } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { useState } from 'react';
 
-export default function CriarNovoProduto({ isOpen, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    price: '',
-    stock: ''
-  });
+export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdit }) {
+  const [name, setName] = useState(productToEdit?.name || '');
+  const [category, setCategory] = useState(productToEdit?.category || '');
+  const [price, setPrice] = useState(productToEdit?.price || '');
+  const [stock, setStock] = useState(productToEdit?.stock || '');
 
+  // Se o modal não estiver aberto, não renderiza nada
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      price: Number(formData.price),
-      stock: Number(formData.stock)
-    });
-    // Limpa o formulário
-    setFormData({ name: '', category: '', price: '', stock: '' });
+    onSave({ name, category, price, stock });
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in">
         
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-900">Novo Produto</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={20} />
+        {/* Cabeçalho do Modal */}
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-800">
+            {productToEdit ? 'Editar Produto' : 'Novo Produto'}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
+            <X size={24} />
           </button>
         </div>
 
@@ -38,73 +34,65 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
-            <input
+            <input 
               required
-              type="text"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-              placeholder="Ex: Teclado Gamer"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              type="text" 
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Ex: Fone Bluetooth"
+              value={name}
+              onChange={e => setName(e.target.value)}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-            <select
+            <select 
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none bg-white"
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
             >
               <option value="">Selecione...</option>
               <option value="Eletrônicos">Eletrônicos</option>
               <option value="Móveis">Móveis</option>
               <option value="Periféricos">Periféricos</option>
-              <option value="Acessórios">Acessórios</option>
+              <option value="Outros">Outros</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
-              <input
+              <input 
                 required
-                type="number"
+                type="number" 
                 step="0.01"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="0,00"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                value={price}
+                onChange={e => setPrice(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estoque</label>
-              <input
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Inicial</label>
+              <input 
                 required
-                type="number"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
+                type="number" 
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="0"
-                value={formData.stock}
-                onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                value={stock}
+                onChange={e => setStock(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 shadow-sm"
-            >
-              Salvar
-            </button>
-          </div>
+          <button 
+            type="submit" 
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 mt-4 active:scale-95"
+          >
+            <Save size={20} />
+            {productToEdit ? 'Salvar Alterações' : 'Cadastrar Produto'}
+          </button>
         </form>
       </div>
     </div>

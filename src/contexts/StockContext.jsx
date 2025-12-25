@@ -3,32 +3,26 @@ import { createContext, useState, useContext, useEffect } from 'react';
 const StockContext = createContext();
 
 export function StockProvider({ children }) {
-  // 1. CARREGAR DADOS SALVOS (OU USAR O PADRÃO)
+  // --- CARREGAR DADOS ---
   const [products, setProducts] = useState(() => {
-    const savedProducts = localStorage.getItem('estoque-produtos');
-    return savedProducts ? JSON.parse(savedProducts) : [
+    const saved = localStorage.getItem('estoque-produtos');
+    return saved ? JSON.parse(saved) : [
       { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
-      { id: 2, name: 'Cadeira Gamer', category: 'Móveis', price: 899.00, stock: 5, status: 'Baixo Estoque' },
-      { id: 3, name: 'Teclado Mecânico', category: 'Periféricos', price: 250.00, stock: 0, status: 'Sem Estoque' },
     ];
   });
 
   const [transactions, setTransactions] = useState(() => {
-    const savedTransactions = localStorage.getItem('estoque-transacoes');
-    return savedTransactions ? JSON.parse(savedTransactions) : [
-      { id: 101, productId: 1, productName: 'Fone Bluetooth', type: 'entrada', quantity: 50, reason: 'Compra Inicial', date: '20/12/2025' },
-      { id: 102, productId: 2, productName: 'Cadeira Gamer', type: 'saida', quantity: 1, reason: 'Venda #1055', date: '24/12/2025' },
-      { id: 103, productId: 1, productName: 'Fone Bluetooth', type: 'saida', quantity: 2, reason: 'Venda Balcão', date: '25/12/2025' },
-    ];
+    const saved = localStorage.getItem('estoque-transacoes');
+    return saved ? JSON.parse(saved) : [];
   });
 
-  // 2. SALVAR AUTOMATICAMENTE SEMPRE QUE MUDAR
+  // --- SALVAR AUTOMATICAMENTE ---
   useEffect(() => {
     localStorage.setItem('estoque-produtos', JSON.stringify(products));
     localStorage.setItem('estoque-transacoes', JSON.stringify(transactions));
   }, [products, transactions]);
 
-  // Função Auxiliar para calcular Status
+  // --- AUXILIAR DE STATUS ---
   const getStatus = (qtd) => {
     if (qtd <= 0) return 'Sem Estoque';
     if (qtd < 10) return 'Baixo Estoque';
@@ -41,12 +35,28 @@ export function StockProvider({ children }) {
     const productWithId = {
       ...newProduct,
       id: Date.now(),
-      // FIX CRÍTICO: Forçamos a conversão para Number para evitar erros de soma
-      price: Number(newProduct.price),
-      stock: Number(newProduct.stock),
+      price: Math.max(0, Number(newProduct.price)),
+      stock: Math.max(0, Number(newProduct.stock)),
       status: getStatus(Number(newProduct.stock))
     };
     setProducts([...products, productWithId]);
+  };
+
+  const updateProduct = (id, updatedData) => {
+    const newProducts = products.map(product => {
+      if (product.id === id) {
+        const validatedStock = Math.max(0, Number(updatedData.stock));
+        return {
+          ...product,
+          ...updatedData,
+          price: Math.max(0, Number(updatedData.price)),
+          stock: validatedStock,
+          status: getStatus(validatedStock)
+        };
+      }
+      return product;
+    });
+    setProducts(newProducts);
   };
 
   const removeProduct = (productId) => {
@@ -55,34 +65,36 @@ export function StockProvider({ children }) {
   };
 
   const addTransaction = (productId, type, quantity, reason) => {
-    const qtdNumber = Number(quantity); // Garante que é número
+    const qtdNumber = Number(quantity);
+    const productIndex = products.findIndex(p => p.id === Number(productId));
 
-    // 1. Atualiza o Estoque do Produto
+    if (productIndex === -1) return { success: false, message: "Produto não encontrado!" };
+
+    const currentProduct = products[productIndex];
+    
+    // VALIDAÇÃO: Impede saída maior que o estoque disponível
+    if (type === 'saida' && currentProduct.stock < qtdNumber) {
+      return { 
+        success: false, 
+        message: `Estoque insuficiente! Disponível: ${currentProduct.stock} un.` 
+      };
+    }
+
     const updatedProducts = products.map(product => {
       if (product.id === Number(productId)) {
         const currentStock = Number(product.stock);
-        const newStock = type === 'entrada' 
-          ? currentStock + qtdNumber 
-          : currentStock - qtdNumber;
-        
-        return {
-          ...product,
-          stock: newStock,
-          status: getStatus(newStock)
-        };
+        const newStock = type === 'entrada' ? currentStock + qtdNumber : currentStock - qtdNumber;
+        return { ...product, stock: newStock, status: getStatus(newStock) };
       }
       return product;
     });
 
     setProducts(updatedProducts);
 
-    // 2. Adiciona ao Histórico
-    const productMoved = products.find(p => p.id === Number(productId));
-    
     const newTransaction = {
       id: Date.now(),
-      productId,
-      productName: productMoved?.name,
+      productId: Number(productId),
+      productName: currentProduct.name,
       type,
       quantity: qtdNumber,
       reason,
@@ -90,11 +102,11 @@ export function StockProvider({ children }) {
     };
 
     setTransactions([newTransaction, ...transactions]);
+    return { success: true };
   };
 
-  // Função extra: Limpar tudo (útil para testes)
   const clearAllData = () => {
-    if(window.confirm("Isso apagará todos os dados e resetará o sistema. Continuar?")) {
+    if(window.confirm("Isso apagará todos os dados salvos. Continuar?")) {
         localStorage.removeItem('estoque-produtos');
         localStorage.removeItem('estoque-transacoes');
         window.location.reload();
@@ -102,7 +114,15 @@ export function StockProvider({ children }) {
   };
 
   return (
-    <StockContext.Provider value={{ products, transactions, addProduct, removeProduct, addTransaction, clearAllData }}>
+    <StockContext.Provider value={{ 
+      products, 
+      transactions, 
+      addProduct, 
+      updateProduct, 
+      removeProduct, 
+      addTransaction, 
+      clearAllData 
+    }}>
       {children}
     </StockContext.Provider>
   );
