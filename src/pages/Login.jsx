@@ -20,6 +20,7 @@ export default function Login() {
         
         {/* Cabeçalho do Card */}
         <div className="text-center">
+          
           <h2 className="mt-2 text-3xl font-extrabold text-blue-900">
             Estoque Fácil
           </h2>
