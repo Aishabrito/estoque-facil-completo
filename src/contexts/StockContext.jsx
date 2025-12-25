@@ -1,52 +1,74 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 
 const StockContext = createContext();
 
 export function StockProvider({ children }) {
-  // 1. Estado Global de Produtos
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
-    { id: 2, name: 'Cadeira Gamer', category: 'Móveis', price: 899.00, stock: 5, status: 'Baixo Estoque' },
-    { id: 3, name: 'Teclado Mecânico', category: 'Periféricos', price: 250.00, stock: 0, status: 'Sem Estoque' },
-  ]);
+  // 1. CARREGAR DADOS SALVOS (OU USAR O PADRÃO)
+  const [products, setProducts] = useState(() => {
+    const savedProducts = localStorage.getItem('estoque-produtos');
+    return savedProducts ? JSON.parse(savedProducts) : [
+      { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
+      { id: 2, name: 'Cadeira Gamer', category: 'Móveis', price: 899.00, stock: 5, status: 'Baixo Estoque' },
+      { id: 3, name: 'Teclado Mecânico', category: 'Periféricos', price: 250.00, stock: 0, status: 'Sem Estoque' },
+    ];
+  });
 
-  // 2. Estado Global de Histórico (Entradas e Saídas)
-  // ADICIONEI DADOS INICIAIS AQUI PARA NÃO FICAR VAZIO
-  const [transactions, setTransactions] = useState([
-    { id: 101, productId: 1, productName: 'Fone Bluetooth', type: 'entrada', quantity: 50, reason: 'Compra Inicial', date: '20/12/2025' },
-    { id: 102, productId: 2, productName: 'Cadeira Gamer', type: 'saida', quantity: 1, reason: 'Venda #1055', date: '24/12/2025' },
-    { id: 103, productId: 1, productName: 'Fone Bluetooth', type: 'saida', quantity: 2, reason: 'Venda Balcão', date: '25/12/2025' },
-  ]);
+  const [transactions, setTransactions] = useState(() => {
+    const savedTransactions = localStorage.getItem('estoque-transacoes');
+    return savedTransactions ? JSON.parse(savedTransactions) : [
+      { id: 101, productId: 1, productName: 'Fone Bluetooth', type: 'entrada', quantity: 50, reason: 'Compra Inicial', date: '20/12/2025' },
+      { id: 102, productId: 2, productName: 'Cadeira Gamer', type: 'saida', quantity: 1, reason: 'Venda #1055', date: '24/12/2025' },
+      { id: 103, productId: 1, productName: 'Fone Bluetooth', type: 'saida', quantity: 2, reason: 'Venda Balcão', date: '25/12/2025' },
+    ];
+  });
 
-  // Adicionar produto
+  // 2. SALVAR AUTOMATICAMENTE SEMPRE QUE MUDAR
+  useEffect(() => {
+    localStorage.setItem('estoque-produtos', JSON.stringify(products));
+    localStorage.setItem('estoque-transacoes', JSON.stringify(transactions));
+  }, [products, transactions]);
+
+  // Função Auxiliar para calcular Status
+  const getStatus = (qtd) => {
+    if (qtd <= 0) return 'Sem Estoque';
+    if (qtd < 10) return 'Baixo Estoque';
+    return 'Em Estoque';
+  };
+
+  // --- AÇÕES ---
+
   const addProduct = (newProduct) => {
     const productWithId = {
       ...newProduct,
       id: Date.now(),
-      status: newProduct.stock > 0 ? 'Em Estoque' : 'Sem Estoque'
+      // FIX CRÍTICO: Forçamos a conversão para Number para evitar erros de soma
+      price: Number(newProduct.price),
+      stock: Number(newProduct.stock),
+      status: getStatus(Number(newProduct.stock))
     };
     setProducts([...products, productWithId]);
   };
 
-  // Remover produto
   const removeProduct = (productId) => {
     const updatedProducts = products.filter(product => product.id !== productId);
     setProducts(updatedProducts);
   };
 
-  // Registrar Entrada ou Saída
   const addTransaction = (productId, type, quantity, reason) => {
+    const qtdNumber = Number(quantity); // Garante que é número
+
     // 1. Atualiza o Estoque do Produto
     const updatedProducts = products.map(product => {
       if (product.id === Number(productId)) {
+        const currentStock = Number(product.stock);
         const newStock = type === 'entrada' 
-          ? product.stock + Number(quantity) 
-          : product.stock - Number(quantity);
+          ? currentStock + qtdNumber 
+          : currentStock - qtdNumber;
         
         return {
           ...product,
           stock: newStock,
-          status: newStock > 0 ? (newStock < 10 ? 'Baixo Estoque' : 'Em Estoque') : 'Sem Estoque'
+          status: getStatus(newStock)
         };
       }
       return product;
@@ -61,24 +83,31 @@ export function StockProvider({ children }) {
       id: Date.now(),
       productId,
       productName: productMoved?.name,
-      type, // 'entrada' ou 'saida'
-      quantity: Number(quantity),
-      reason, // 'Venda', 'Compra', 'Perda'
+      type,
+      quantity: qtdNumber,
+      reason,
       date: new Date().toLocaleDateString('pt-BR')
     };
 
-    // Adiciona a nova transação no topo da lista
     setTransactions([newTransaction, ...transactions]);
   };
 
+  // Função extra: Limpar tudo (útil para testes)
+  const clearAllData = () => {
+    if(window.confirm("Isso apagará todos os dados e resetará o sistema. Continuar?")) {
+        localStorage.removeItem('estoque-produtos');
+        localStorage.removeItem('estoque-transacoes');
+        window.location.reload();
+    }
+  };
+
   return (
-    <StockContext.Provider value={{ products, transactions, addProduct, removeProduct, addTransaction }}>
+    <StockContext.Provider value={{ products, transactions, addProduct, removeProduct, addTransaction, clearAllData }}>
       {children}
     </StockContext.Provider>
   );
 }
 
-// Hook personalizado
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);
