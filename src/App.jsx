@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { StockProvider } from './contexts/StockContext';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard'; 
 import Produtos from './pages/Produtos';
@@ -8,6 +10,7 @@ import Configuracoes from './pages/Configuracoes';
 
 function App() {
   return (
+    <StockProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -18,6 +21,7 @@ function App() {
         <Route path="/configuracoes" element={<Configuracoes />} />
       </Routes>
     </BrowserRouter>
+    </StockProvider>
   )
 }
 
