@@ -1,18 +1,30 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import CriarNovoProduto from '../components/modals/CriarNovoProduto';
 import { Search, Plus, Edit, Trash2, Filter } from 'lucide-react';
 
 export default function Produtos() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Dados Mockados (Exemplo)
-  const products = [
+  // Estado inicial dos produtos
+  const [products, setProducts] = useState([
     { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
     { id: 2, name: 'Cadeira Gamer', category: 'Móveis', price: 899.00, stock: 5, status: 'Baixo Estoque' },
     { id: 3, name: 'Teclado Mecânico', category: 'Periféricos', price: 250.00, stock: 0, status: 'Sem Estoque' },
-    { id: 4, name: 'Monitor 24"', category: 'Eletrônicos', price: 1200.00, stock: 15, status: 'Em Estoque' },
-    { id: 5, name: 'Mousepad Grande', category: 'Acessórios', price: 89.90, stock: 50, status: 'Em Estoque' },
-  ];
+  ]);
+
+  // Função para adicionar novo produto na lista
+  const handleAddProduct = (newProduct) => {
+    const productWithId = {
+      ...newProduct,
+      id: products.length + 1,
+      status: newProduct.stock > 0 ? 'Em Estoque' : 'Sem Estoque'
+    };
+    
+    setProducts([...products, productWithId]);
+    setIsModalOpen(false); // Fecha o modal após salvar
+  };
 
   return (
     <div className="flex min-h-screen bg-background-light font-sans">
@@ -27,13 +39,16 @@ export default function Produtos() {
             <p className="text-gray-500">Gerencie seu inventário completo</p>
           </div>
           
-          <button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+          >
             <Plus size={20} />
             Novo Produto
           </button>
         </div>
 
-        {/* Filtros */}
+        {/* Barra de Filtros */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex justify-between items-center">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -51,7 +66,7 @@ export default function Produtos() {
           </button>
         </div>
 
-        {/* Tabela */}
+        {/* Tabela de Dados */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -97,6 +112,14 @@ export default function Produtos() {
           </table>
         </div>
       </main>
+
+      {/* Componente Modal */}
+      <CriarNovoProduto 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={handleAddProduct}
+      />
+
     </div>
   );
 }
