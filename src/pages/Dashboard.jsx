@@ -5,7 +5,7 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-screen bg-background-light font-sans">
       <Sidebar />
-      {/* Conteúdo Principal (Movemos para a direita por causa da Sidebar fixa) */}
+      {/* Conteúdo Principal  */}
       <main className="flex-1 ml-64 p-8">
         
         {/* Cabeçalho da Página */}
