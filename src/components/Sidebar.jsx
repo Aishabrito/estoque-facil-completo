@@ -43,11 +43,13 @@ export default function Sidebar() {
 
       {/* Footer do Menu */}
       <div className="p-4 border-t border-gray-100 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
-            <Settings size={20} />
-            Configurações
-        </button>
-
+        <Link 
+  to="/configuracoes" 
+  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+>
+    <Settings size={20} />
+    Configurações
+</Link>
         <button 
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
