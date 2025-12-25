@@ -11,9 +11,14 @@ export function StockProvider({ children }) {
   ]);
 
   // 2. Estado Global de Histórico (Entradas e Saídas)
-  const [transactions, setTransactions] = useState([]);
+  // ADICIONEI DADOS INICIAIS AQUI PARA NÃO FICAR VAZIO
+  const [transactions, setTransactions] = useState([
+    { id: 101, productId: 1, productName: 'Fone Bluetooth', type: 'entrada', quantity: 50, reason: 'Compra Inicial', date: '20/12/2025' },
+    { id: 102, productId: 2, productName: 'Cadeira Gamer', type: 'saida', quantity: 1, reason: 'Venda #1055', date: '24/12/2025' },
+    { id: 103, productId: 1, productName: 'Fone Bluetooth', type: 'saida', quantity: 2, reason: 'Venda Balcão', date: '25/12/2025' },
+  ]);
 
-  // Função para adicionar novo produto (Do zero)
+  // Adicionar produto
   const addProduct = (newProduct) => {
     const productWithId = {
       ...newProduct,
@@ -23,7 +28,13 @@ export function StockProvider({ children }) {
     setProducts([...products, productWithId]);
   };
 
-  // Função para registrar Entrada ou Saída
+  // Remover produto
+  const removeProduct = (productId) => {
+    const updatedProducts = products.filter(product => product.id !== productId);
+    setProducts(updatedProducts);
+  };
+
+  // Registrar Entrada ou Saída
   const addTransaction = (productId, type, quantity, reason) => {
     // 1. Atualiza o Estoque do Produto
     const updatedProducts = products.map(product => {
@@ -56,17 +67,18 @@ export function StockProvider({ children }) {
       date: new Date().toLocaleDateString('pt-BR')
     };
 
+    // Adiciona a nova transação no topo da lista
     setTransactions([newTransaction, ...transactions]);
   };
 
   return (
-    <StockContext.Provider value={{ products, transactions, addProduct, addTransaction }}>
+    <StockContext.Provider value={{ products, transactions, addProduct, removeProduct, addTransaction }}>
       {children}
     </StockContext.Provider>
   );
 }
 
-// Hook personalizado para facilitar o uso
+// Hook personalizado
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);

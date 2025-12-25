@@ -1,12 +1,13 @@
 import Sidebar from '../components/Sidebar';
-import { ArrowDownCircle, Calendar } from 'lucide-react';
+import { ArrowDownCircle, Calendar, PackageOpen } from 'lucide-react';
+import { useStock } from '../contexts/StockContext';
+
 
 export default function Saidas() {
-  const history = [
-    { id: 1, product: 'Cadeira Gamer', quantity: 1, date: '25/12/2025', reason: 'Venda #1023' },
-    { id: 2, product: 'Teclado Mecânico', quantity: 2, date: '24/12/2025', reason: 'Venda #1021' },
-    { id: 3, product: 'Fone Bluetooth', quantity: 1, date: '24/12/2025', reason: 'Troca em Garantia' },
-  ];
+  const { transactions } = useStock(); 
+
+  // Filtramos apenas o que é 'saida' 
+  const saidas = (transactions || []).filter(t => t.type === 'saida');
 
   return (
     <div className="flex min-h-screen bg-background-light font-sans">
@@ -28,17 +29,28 @@ export default function Saidas() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {history.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">{item.product}</td>
-                  <td className="p-4 text-red-600 font-bold">-{item.quantity}</td>
-                  <td className="p-4 text-gray-500">{item.reason}</td>
-                  <td className="p-4 text-gray-500 flex items-center gap-2">
-                    <Calendar size={16} />
-                    {item.date}
+              {saidas.length > 0 ? (
+                saidas.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="p-4 font-medium text-gray-900">{item.productName}</td>
+                    <td className="p-4 text-red-600 font-bold">-{item.quantity}</td>
+                    <td className="p-4 text-gray-500">{item.reason}</td>
+                    <td className="p-4 text-gray-500 flex items-center gap-2">
+                      <Calendar size={16} />
+                      {item.date}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="p-12 text-center text-gray-400">
+                    <div className="flex flex-col items-center gap-2">
+                      <PackageOpen size={40} strokeWidth={1.5} />
+                      <p>Nenhuma saída registrada no sistema.</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -2,41 +2,22 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import CriarNovoProduto from '../components/modals/CriarNovoProduto'; 
 import { Search, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { useStock } from '../contexts/StockContext'; // <--- 1. Importamos o Contexto
 
 export default function Produtos() {
+  const { products, addProduct } = useStock(); // <--- 2. Pegamos os dados e a função do "Cérebro"
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
-    { id: 2, name: 'Cadeira Gamer', category: 'Móveis', price: 899.00, stock: 5, status: 'Baixo Estoque' },
-    { id: 3, name: 'Teclado Mecânico', category: 'Periféricos', price: 250.00, stock: 0, status: 'Sem Estoque' },
-    { id: 4, name: 'Monitor 24"', category: 'Eletrônicos', price: 1200.00, stock: 15, status: 'Em Estoque' },
-    { id: 5, name: 'Mousepad Grande', category: 'Acessórios', price: 89.90, stock: 50, status: 'Em Estoque' },
-  ]);
 
-  // Adicionar (Create)
-  const handleAddProduct = (newProduct) => {
-    const productWithId = {
-      ...newProduct,
-      id: Date.now(), // Gera um ID único baseado no tempo (melhor que length + 1 para evitar bugs)
-      status: newProduct.stock > 0 ? 'Em Estoque' : 'Sem Estoque'
-    };
-    setProducts([...products, productWithId]);
-    setIsModalOpen(false);
-  };
-
-  //  Excluir 
+ // Função para deletar
   const handleDeleteProduct = (id) => {
-    // Pergunta antes de apagar 
-    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-      const updatedProducts = products.filter(product => product.id !== id);
-      setProducts(updatedProducts);
-    }
+    console.log("Tentando deletar o produto ID:", id); 
+    
+    alert("Funcionalidade de deletar precisa ser adicionada ao Contexto!");
   };
-
-  //  Filtrar 
-  
+  // Filtro de busca
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -47,8 +28,6 @@ export default function Produtos() {
       <Sidebar />
 
       <main className="flex-1 ml-64 p-8">
-        
-        {/* Cabeçalho */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
@@ -64,7 +43,7 @@ export default function Produtos() {
           </button>
         </div>
 
-        {/* Barra de Filtros */}
+        {/* Filtros */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex justify-between items-center">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -82,7 +61,7 @@ export default function Produtos() {
           </button>
         </div>
 
-        {/* Tabela de Dados */}
+        {/* Tabela */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -96,48 +75,37 @@ export default function Produtos() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 font-medium text-gray-900">{product.name}</td>
-                    <td className="p-4 text-gray-500">{product.category}</td>
-                    <td className="p-4 font-medium text-gray-900">
-                      {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </td>
-                    <td className="p-4 text-gray-600">{product.stock} un.</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${product.stock === 0 ? 'bg-red-100 text-red-800' : 
-                          product.stock < 10 ? 'bg-orange-100 text-orange-800' : 
-                          'bg-green-100 text-green-800'}`}>
-                        {product.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                          <Edit size={18} />
-                        </button>
-                        
-                        {/* Botão de Excluir Conectado */}
-                        <button 
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="p-8 text-center text-gray-500">
-                    Nenhum produto encontrado.
+              {filteredProducts.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-4 font-medium text-gray-900">{product.name}</td>
+                  <td className="p-4 text-gray-500">{product.category}</td>
+                  <td className="p-4 font-medium text-gray-900">
+                    {product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </td>
+                  <td className="p-4 text-gray-600">{product.stock} un.</td>
+                  <td className="p-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                      ${product.stock === 0 ? 'bg-red-100 text-red-800' : 
+                        product.stock < 10 ? 'bg-orange-100 text-orange-800' : 
+                        'bg-green-100 text-green-800'}`}>
+                      {product.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Edit size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -146,7 +114,11 @@ export default function Produtos() {
       <CriarNovoProduto 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSave={handleAddProduct}
+        // 3. Importante: Aqui usamos a função addProduct que vem do CONTEXTO
+        onSave={(novoItem) => {
+           addProduct(novoItem);
+           setIsModalOpen(false);
+        }}
       />
     </div>
   );
