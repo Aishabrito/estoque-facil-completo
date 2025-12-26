@@ -1,90 +1,128 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import pg from 'pg';
+import { PrismaClient } from '@prisma/client';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 
-// Carrega as variáveis do arquivo .env
-dotenv.config();
-
-const { Pool } = pg;
 const app = express();
+const prisma = new PrismaClient();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// CONFIGURAÇÃO DA CONEXÃO (Usando Transaction Pooler para IPv4)
-const pool = new Pool({
-  // Montamos a string com a sua senha e o ID do projeto que você confirmou
-  connectionString: "postgresql://postgres.punpoymvhyigizkcgdhw:pm1NQ0hEiDgeNcyj@aws-1-us-east-2.pooler.supabase.com:6543/postgres",
-  ssl: {
-    // Resolve o erro "self-signed certificate in certificate chain"
-    rejectUnauthorized: false 
-  }
-});
-
-// Função para testar conexão e criar a tabela automaticamente
-const setupDatabase = async () => {
-  try {
-    const client = await pool.connect();
-    console.log("🚀 Conexão com Supabase estabelecida com sucesso!");
-    
-    // Cria a tabela de produtos se ela não existir
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS produtos (
-        id SERIAL PRIMARY KEY,
-        nome VARCHAR(255) NOT NULL,
-        categoria VARCHAR(100),
-        preco DECIMAL(10,2) NOT NULL,
-        estoque INTEGER NOT NULL DEFAULT 0,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    
-    console.log("✅ Tabela 'produtos' verificada/criada no banco.");
-    client.release();
-  } catch (err) {
-    console.error("❌ Erro ao configurar banco:", err.message);
-  }
+// --- CONFIGURAÇÃO DO SWAGGER (MODO SEGURO VIA JSON) ---
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Estoque Fácil API 📦',
+    version: '1.0.0',
+    description: 'Documentação das rotas do sistema de estoque',
+  },
+  servers: [{ url: 'http://localhost:3002' }],
+  components: {
+    schemas: {
+      Produto: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          nome: { type: 'string' },
+          categoria: { type: 'string' },
+          preco: { type: 'number' },
+          estoque: { type: 'integer' },
+        },
+      },
+    },
+  },
+  paths: {
+    '/produtos': {
+      get: {
+        summary: 'Lista todos os produtos',
+        tags: ['Produtos'],
+        responses: {
+          200: {
+            description: 'Lista de produtos retornada com sucesso',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/Produto' },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: 'Cria um novo produto',
+        tags: ['Produtos'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  nome: { type: 'string' },
+                  categoria: { type: 'string' },
+                  preco: { type: 'number' },
+                  estoque: { type: 'integer' },
+                },
+                required: ['nome', 'preco', 'estoque'],
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Produto criado com sucesso',
+          },
+        },
+      },
+    },
+  },
 };
 
-// Executa a configuração inicial
-setupDatabase();
+const swaggerOptions = {
+  definition: swaggerDefinition,
+  apis: [], // Deixamos vazio para ele NÃO ler comentários e não dar erro
+};
 
-// --- ROTAS DA API ---
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Rota de teste no navegador
-app.get('/', (req, res) => {
-  res.send("API de Estoque Online! 🚀");
-});
+// --- ROTAS (Agora sem comentários complexos para não quebrar) ---
 
-// Rota para listar todos os produtos
 app.get('/produtos', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM produtos ORDER BY id DESC');
-    res.json(result.rows);
+    const produtos = await prisma.produto.findMany({
+      orderBy: { id: 'desc' }
+    });
+    res.json(produtos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Rota para cadastrar um novo produto
 app.post('/produtos', async (req, res) => {
   const { nome, categoria, preco, estoque } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO produtos (nome, categoria, preco, estoque) VALUES ($1, $2, $3, $4) RETURNING *',
-      [nome, categoria, preco, estoque]
-    );
-    res.status(201).json(result.rows[0]);
+    const novoProduto = await prisma.produto.create({
+      data: {
+        nome,
+        categoria,
+        preco,
+        estoque: Number(estoque)
+      }
+    });
+    res.status(201).json(novoProduto);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Inicia o servidor na porta 3002 (para evitar o erro EADDRINUSE na 3001)
-const PORT = process.env.PORT || 3002;
+// Inicia o servidor
+const PORT = 3002;
 app.listen(PORT, () => {
-  console.log(`\n📡 Servidor rodando em http://localhost:${PORT}`);
-  console.log(`💡 Para testar a conexão, acesse o link acima no navegador.\n`);
+  console.log(`\n🚀 Servidor Prisma rodando em http://localhost:${PORT}`);
+  console.log(`📄 Acesse o Swagger sem erros em: http://localhost:${PORT}/api-docs\n`);
 });
