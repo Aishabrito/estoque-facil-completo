@@ -1,39 +1,53 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-export class DashboardController {
+export default {
   async resumo(req, res) {
     try {
-      // 1. Busca dados básicos dos produtos para cálculos
-      const produtos = await prisma.produto.findMany({
-        select: { estoque: true, preco: true }
-      });
+      // 1. OBRIGATÓRIO: Busca os dados da tabela PRODUTOS
+      const produtos = await prisma.produto.findMany();
 
-      // Cálculos Matemáticos
-      const totalItensFisicos = produtos.reduce((acc, p) => acc + p.estoque, 0);
-      const valorTotalEstoque = produtos.reduce((acc, p) => acc + (Number(p.preco) * p.estoque), 0);
-      const produtosBaixoEstoque = produtos.filter(p => p.estoque < 10).length;
-      
-      const totalCategorias = await prisma.produto.count(); // Total de produtos cadastrados
+      console.log("--- DEBUG DO DASHBOARD ---");
+      console.log(`Encontrei ${produtos.length} produtos no banco.`);
 
-      // 2. Busca as últimas 5 movimentações
-      const ultimasMovs = await prisma.movimentacao.findMany({
+      // 2. CÁLCULO DO VALOR TOTAL (Preço * Quantidade)
+      const valorTotal = produtos.reduce((total, produto) => {
+        // Converte para número, trocando vírgula por ponto se necessário
+        const preco = Number(String(produto.preco).replace(',', '.')) || 0;
+        const estoque = Number(produto.estoque) || 0;
+        
+        return total + (preco * estoque);
+      }, 0);
+
+      // 3. CÁLCULO DO TOTAL DE ITENS (Soma das quantidades físicas)
+      const totalItens = produtos.reduce((total, produto) => {
+        return total + (Number(produto.estoque) || 0);
+      }, 0);
+
+      // 4. CÁLCULO DE ESTOQUE BAIXO
+      const baixoEstoque = produtos.filter(p => (Number(p.estoque) || 0) < 10).length;
+
+      // 5. Busca as últimas movimentações para a lista de baixo
+      const movimentacoes = await prisma.movimentacao.findMany({
         take: 5,
         orderBy: { data: 'desc' },
-        include: { produto: { select: { nome: true } } }
+        include: { produto: true }
       });
 
-      // Retorna tudo pronto para o Frontend
+      console.log(`Totais calculados -> Valor: R$${valorTotal} | Itens: ${totalItens}`);
+      console.log("--------------------------");
+
       return res.json({
-        totalItens: totalItensFisicos,
-        totalCategorias: totalCategorias,
-        valorTotal: valorTotalEstoque,
-        baixoEstoque: produtosBaixoEstoque,
-        movimentacoes: ultimasMovs
+        totalItens,        // Quantidade física
+        totalCategorias: produtos.length, // Quantidade de cadastros
+        valorTotal,        // Valor em dinheiro
+        baixoEstoque,      // Alertas
+        movimentacoes
       });
 
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+    } catch (error) {
+      console.error("Erro ao calcular dashboard:", error);
+      return res.status(500).json({ error: "Erro interno no dashboard" });
     }
   }
-}
+};

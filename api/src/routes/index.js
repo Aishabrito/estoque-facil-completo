@@ -1,26 +1,36 @@
 import { Router } from 'express';
-import { ProdutoController } from '../controllers/ProdutoController.js';
-import { MovimentacaoController } from '../controllers/MovimentacaoController.js';
-import { DashboardController } from '../controllers/DashboardController.js';
+
+// IMPORTANTE:
+// 1. Removemos as chaves { } porque agora é "export default"
+// 2. Se o ProdutoController ainda for Class, mantenha como estava. 
+//    Mas Movimentacao e Dashboard agora são objetos diretos.
+import { ProdutoController } from '../controllers/ProdutoController.js'; 
+import MovimentacaoController from '../controllers/MovimentacaoController.js';
+import DashboardController from '../controllers/DashboardController.js';
 
 const routes = Router();
 
-// Instâncias dos Controllers (Vamos criar já já)
-const produtoController = new ProdutoController();
-const movController = new MovimentacaoController();
-const dashController = new DashboardController();
+// --- INSTÂNCIAS ---
+// Apenas ProdutoController precisa de "new" se ele ainda for uma Class.
+// Movimentacao e Dashboard já vêm prontos para uso.
+const produtoController = new ProdutoController(); 
+
 
 // --- ROTAS DE PRODUTOS ---
+// (Mantive igual, assumindo que você não mudou esse arquivo ainda)
 routes.get('/produtos', produtoController.listar);
 routes.post('/produtos', produtoController.criar);
 routes.put('/produtos/:id', produtoController.atualizar);
 routes.delete('/produtos/:id', produtoController.deletar);
 
-// --- ROTAS DE MOVIMENTAÇÕES ---
-routes.get('/movimentacoes', movController.listar);
-routes.post('/movimentacoes', movController.criar);
 
-// --- DASHBOARD ---
-routes.get('/dashboard', dashController.resumo);
+// --- ROTAS DE MOVIMENTAÇÕES (ATUALIZADO) ---
+// Note que usamos .index e .store agora, e chamamos direto o import
+routes.get('/movimentacoes', MovimentacaoController.index);
+routes.post('/movimentacoes', MovimentacaoController.store);
+
+
+// --- DASHBOARD (ATUALIZADO) ---
+routes.get('/dashboard', DashboardController.resumo);
 
 export { routes };
