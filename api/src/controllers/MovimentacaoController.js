@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class MovimentacaoController {
-  // Lista todo o histórico para as telas de Entradas/Saídas
+  
   async listar(req, res) {
     try {
       const historico = await prisma.movimentacao.findMany({
@@ -15,12 +15,15 @@ export class MovimentacaoController {
     }
   }
 
-  // O "Coração": Registra a movimentação e atualiza o saldo automaticamente
   async criar(req, res) {
     const { produtoId, tipo, qtd } = req.body;
 
+    // --- CORREÇÃO DE SEGURANÇA ---
+    // Força virar maiúsculo para garantir que o IF funcione
+    const tipoFormatado = tipo.toUpperCase(); 
+    // -----------------------------
+
     try {
-      // 1. Validar se o produto existe e buscar o estoque atual
       const produtoAlvo = await prisma.produto.findUnique({
         where: { id: Number(produtoId) }
       });
@@ -29,20 +32,24 @@ export class MovimentacaoController {
         return res.status(404).json({ error: "Produto não encontrado no sistema." });
       }
 
-      // 2. Regra de Negócio: Não permitir estoque negativo
-      if (tipo === 'SAIDA' && produtoAlvo.estoque < Number(qtd)) {
+      // Agora usa 'tipoFormatado'
+      if (tipoFormatado === 'SAIDA' && produtoAlvo.estoque < Number(qtd)) {
         return res.status(400).json({ 
           error: `Saldo insuficiente. Estoque atual: ${produtoAlvo.estoque}, Tentativa de saída: ${qtd}` 
         });
       }
 
-      // 3. Executar a transação (Coração do processo)
       const resultado = await prisma.$transaction(async (tx) => {
         const mov = await tx.movimentacao.create({
-          data: { produtoId: Number(produtoId), tipo, qtd: Number(qtd) }
+          data: { 
+              produtoId: Number(produtoId), 
+              tipo: tipoFormatado, // Salva no banco padronizado (ENTRADA/SAIDA)
+              qtd: Number(qtd) 
+          }
         });
 
-        const operacao = tipo === 'ENTRADA' ? { increment: Number(qtd) } : { decrement: Number(qtd) };
+        // Usa 'tipoFormatado' para decidir a conta matemática
+        const operacao = tipoFormatado === 'ENTRADA' ? { increment: Number(qtd) } : { decrement: Number(qtd) };
         
         const produtoAtualizado = await tx.produto.update({
           where: { id: Number(produtoId) },
