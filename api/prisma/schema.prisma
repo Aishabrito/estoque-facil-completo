@@ -23,11 +23,13 @@ model Produto {
 
 model Movimentacao {
   id        Int      @id @default(autoincrement())
-  tipo      String   // Vamos salvar "ENTRADA" ou "SAIDA"
+  tipo      String   // "ENTRADA" ou "SAIDA"
   qtd       Int
-  data      DateTime @default(now())
   
-  // Relação com o Produto
+  // ADICIONE ESTA LINHA ABAIXO (O '?' significa que não é obrigatório)
+  motivo    String?  
+  
+  data      DateTime @default(now())
   produtoId Int
   produto   Produto  @relation(fields: [produtoId], references: [id])
 

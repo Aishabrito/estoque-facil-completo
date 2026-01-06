@@ -12,11 +12,7 @@ export default function Entradas() {
       try {
         const response = await api.get('/movimentacoes');
 
-        // --- DEBUG: Veja no Console (F12) o que o banco devolveu ---
-        console.log("ENTRADAS - DADOS DO BANCO:", response.data);
-        // -----------------------------------------------------------
-
-        // Filtro Flexível: Aceita 'Entrada', 'entrada' ou 'ENTRADA'
+        // Filtra apenas o que é ENTRADA (independente de maiúsculo/minúsculo)
         const apenasEntradas = response.data.filter(mov => 
             mov.tipo && mov.tipo.toUpperCase() === 'ENTRADA'
         );
@@ -58,11 +54,14 @@ export default function Entradas() {
                   entradas.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                       <td className="p-4 font-medium text-gray-900">
-                        {/* Proteção contra produto excluído */}
-                        {item.produto?.nome || <span className="text-gray-400 italic">Excluído</span>}
+                        {/* Exibe o nome ou avisa se foi excluído */}
+                        {item.produto?.nome || <span className="text-gray-400 italic">Produto Excluído</span>}
                       </td>
                       <td className="p-4 text-green-600 font-bold">+{item.qtd}</td>
-                      <td className="p-4 text-gray-500">{item.motivo || '-'}</td>
+                      <td className="p-4 text-gray-500">
+                        {/* AQUI ESTÁ A CORREÇÃO: Lê o campo 'motivo' do banco */}
+                        {item.motivo || '-'}
+                      </td>
                       <td className="p-4 text-gray-500 flex items-center gap-2">
                         <Calendar size={16} />
                         {new Date(item.data).toLocaleDateString('pt-BR')}

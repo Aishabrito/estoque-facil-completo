@@ -2,80 +2,87 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export default {
-  // Método de Listagem (Antigo 'listar')
+  // LISTAR
   async index(req, res) {
     try {
-      const historico = await prisma.movimentacao.findMany({
+      const movimentacoes = await prisma.movimentacao.findMany({
         orderBy: { data: 'desc' },
-        include: { 
-          // Traz o produto INTEIRO. Se usar 'select: { nome: true }', 
-          // o Dashboard pode dar erro se tentar ler outra coisa.
-          produto: true 
-        }
+        include: { produto: true }
       });
-      return res.json(historico);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.json(movimentacoes);
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao buscar histórico" });
     }
   },
 
-  // Método de Criação (Antigo 'criar')
+  // CRIAR
   async store(req, res) {
-    const { produtoId, tipo, qtd, reason } = req.body; // Adicionei 'reason' caso queira salvar o motivo
+    // 1. Recebe os dados do Front (aceita tanto 'motivo' quanto 'reason')
+    const { produtoId, tipo, qtd, reason, motivo } = req.body;
 
-    // Força virar maiúsculo para garantir que o IF funcione
-    // Se o frontend mandar 'entrada', aqui vira 'ENTRADA'
-    const tipoFormatado = tipo ? tipo.toUpperCase() : ''; 
+    const id = Number(produtoId);
+    const quantidade = Math.abs(Number(qtd)); // Garante positivo
+    
+    // Limpa o texto: " entrada " vira "ENTRADA"
+    const tipoFormatado = tipo ? String(tipo).trim().toUpperCase() : '';
+    
+    // Resolve o problema do motivo não aparecer
+    const motivoFinal = motivo || reason || 'Sem motivo';
 
-    if (!produtoId || !qtd || !tipoFormatado) {
-        return res.status(400).json({ error: "Dados incompletos." });
+    // --- LOG DE DEBUG (Olhe o terminal!) ---
+    console.log(`>>> TENTATIVA DE ${tipoFormatado} | QTD: ${quantidade} | MOTIVO: ${motivoFinal}`);
+
+    if (!id || !quantidade || !tipoFormatado) {
+      return res.status(400).json({ error: "Dados incompletos." });
     }
 
     try {
-      // 1. Busca o produto para validar estoque
-      const produtoAlvo = await prisma.produto.findUnique({
-        where: { id: Number(produtoId) }
-      });
-
-      if (!produtoAlvo) {
-        return res.status(404).json({ error: "Produto não encontrado." });
-      }
-
-      // Validação de Saldo para SAÍDA
-      if (tipoFormatado === 'SAIDA' && produtoAlvo.estoque < Number(qtd)) {
-        return res.status(400).json({ 
-          error: `Saldo insuficiente. Estoque atual: ${produtoAlvo.estoque}, Tentativa: ${qtd}` 
-        });
-      }
-
-      // 2. Transação: Cria o histórico E atualiza o saldo juntos
       const resultado = await prisma.$transaction(async (tx) => {
+        const produto = await tx.produto.findUnique({ where: { id } });
+        if (!produto) throw new Error("Produto não encontrado.");
+
+        let operacao;
+
+        // 2. Lógica Exata
+        if (tipoFormatado === 'ENTRADA') {
+            console.log("LOGICA: SOMANDO AO ESTOQUE (+)");
+            operacao = { increment: quantidade };
+        } 
+        else if (tipoFormatado === 'SAIDA') {
+            console.log("LOGICA: SUBTRAINDO DO ESTOQUE (-)");
+            if (produto.estoque < quantidade) {
+               throw new Error(`Estoque insuficiente. Tem: ${produto.estoque}`);
+            }
+            operacao = { decrement: quantidade };
+        } 
+        else {
+            throw new Error(`Tipo inválido: ${tipoFormatado}`);
+        }
+
+        // 3. Salva Movimentação (Agora com motivo!)
         const mov = await tx.movimentacao.create({
-          data: { 
-              produtoId: Number(produtoId), 
-              tipo: tipoFormatado, 
-              qtd: Number(qtd),
-              motivo: reason || '' // Salva o motivo se tiver
+          data: {
+            produtoId: id,
+            tipo: tipoFormatado,
+            qtd: quantidade,
+            motivo: motivoFinal 
           }
         });
 
-        // Define se soma ou subtrai
-        const operacao = tipoFormatado === 'ENTRADA' ? { increment: Number(qtd) } : { decrement: Number(qtd) };
-        
-        // Atualiza o estoque
-        const produtoAtualizado = await tx.produto.update({
-          where: { id: Number(produtoId) },
+        // 4. Atualiza Produto
+        const prodAtualizado = await tx.produto.update({
+          where: { id },
           data: { estoque: operacao }
         });
 
-        return { mov, saldoAtual: produtoAtualizado.estoque };
+        return { mov, novoSaldo: prodAtualizado.estoque };
       });
 
       return res.status(201).json(resultado);
 
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Erro ao processar movimentação." });
+    } catch (error) {
+      console.error("ERRO:", error.message);
+      return res.status(400).json({ error: error.message });
     }
   }
-}
+};

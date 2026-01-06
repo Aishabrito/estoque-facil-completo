@@ -2,52 +2,89 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export default {
-  async resumo(req, res) {
+  // --- LISTAR (Traz o motivo do banco) ---
+  async index(req, res) {
+    const movimentacoes = await prisma.movimentacao.findMany({
+      orderBy: { data: 'desc' },
+      include: { produto: true }
+    });
+    return res.json(movimentacoes);
+  },
+
+  // --- CRIAR (Corrige a soma e salva o motivo) ---
+  async store(req, res) {
+    const { produtoId, tipo, qtd, reason, motivo } = req.body;
+
+    // 1. Limpeza e Padronização
+    const id = Number(produtoId);
+    const quantidade = Math.abs(Number(qtd)); // Garante número positivo
+    
+    // Transforma em maiúsculo e tira espaços extras
+    // Ex: " entrada " vira "ENTRADA"
+    const tipoFormatado = tipo ? String(tipo).trim().toUpperCase() : ''; 
+    
+    // Pega o motivo de qualquer um dos campos que o front mandar
+    const motivoFinal = motivo || reason || '';
+
+    // --- DEBUG NO TERMINAL (Para você conferir) ---
+    console.log("--------------------------------");
+    console.log(`Processando: ${tipoFormatado}`);
+    console.log(`Qtd: ${quantidade} | Motivo: ${motivoFinal}`);
+    // ---------------------------------------------
+
+    if (!id || !quantidade || !tipoFormatado) {
+      return res.status(400).json({ error: "Dados incompletos." });
+    }
+
     try {
-      // 1. OBRIGATÓRIO: Busca os dados da tabela PRODUTOS
-      const produtos = await prisma.produto.findMany();
+      const resultado = await prisma.$transaction(async (tx) => {
+        // Verifica se produto existe
+        const produto = await tx.produto.findUnique({ where: { id } });
+        if (!produto) throw new Error("Produto não encontrado.");
 
-      console.log("--- DEBUG DO DASHBOARD ---");
-      console.log(`Encontrei ${produtos.length} produtos no banco.`);
+        let operacao;
 
-      // 2. CÁLCULO DO VALOR TOTAL (Preço * Quantidade)
-      const valorTotal = produtos.reduce((total, produto) => {
-        // Converte para número, trocando vírgula por ponto se necessário
-        const preco = Number(String(produto.preco).replace(',', '.')) || 0;
-        const estoque = Number(produto.estoque) || 0;
-        
-        return total + (preco * estoque);
-      }, 0);
+        // 2. Lógica Exata de Soma/Subtração
+        if (tipoFormatado === 'ENTRADA') {
+            console.log(">> AÇÃO: SOMANDO AO ESTOQUE (+)");
+            operacao = { increment: quantidade };
+        } 
+        else if (tipoFormatado === 'SAIDA') {
+            console.log(">> AÇÃO: SUBTRAINDO DO ESTOQUE (-)");
+            if (produto.estoque < quantidade) {
+                throw new Error(`Saldo insuficiente. Tem: ${produto.estoque}`);
+            }
+            operacao = { decrement: quantidade };
+        } 
+        else {
+            // Se não for nem um nem outro, dá erro para não fazer besteira
+            throw new Error(`Tipo inválido: '${tipoFormatado}'.`);
+        }
 
-      // 3. CÁLCULO DO TOTAL DE ITENS (Soma das quantidades físicas)
-      const totalItens = produtos.reduce((total, produto) => {
-        return total + (Number(produto.estoque) || 0);
-      }, 0);
+        // 3. Salva no Histórico (AGORA COM MOTIVO!)
+        const mov = await tx.movimentacao.create({
+          data: {
+            produtoId: id,
+            tipo: tipoFormatado,
+            qtd: quantidade,
+            motivo: motivoFinal // Agora o banco tem essa coluna!
+          }
+        });
 
-      // 4. CÁLCULO DE ESTOQUE BAIXO
-      const baixoEstoque = produtos.filter(p => (Number(p.estoque) || 0) < 10).length;
+        // 4. Atualiza o Estoque do Produto
+        const prodAtualizado = await tx.produto.update({
+          where: { id },
+          data: { estoque: operacao }
+        });
 
-      // 5. Busca as últimas movimentações para a lista de baixo
-      const movimentacoes = await prisma.movimentacao.findMany({
-        take: 5,
-        orderBy: { data: 'desc' },
-        include: { produto: true }
+        return { mov, novoSaldo: prodAtualizado.estoque };
       });
 
-      console.log(`Totais calculados -> Valor: R$${valorTotal} | Itens: ${totalItens}`);
-      console.log("--------------------------");
-
-      return res.json({
-        totalItens,        // Quantidade física
-        totalCategorias: produtos.length, // Quantidade de cadastros
-        valorTotal,        // Valor em dinheiro
-        baixoEstoque,      // Alertas
-        movimentacoes
-      });
+      return res.status(201).json(resultado);
 
     } catch (error) {
-      console.error("Erro ao calcular dashboard:", error);
-      return res.status(500).json({ error: "Erro interno no dashboard" });
+      console.error("ERRO:", error.message);
+      return res.status(400).json({ error: error.message });
     }
   }
 };
