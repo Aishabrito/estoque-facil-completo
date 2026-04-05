@@ -1,58 +1,20 @@
-import { Router } from 'express';
-import { ProdutoController } from '../controllers/ProdutoController.js'; 
-import MovimentacaoController from '../controllers/MovimentacaoController.js';
-import DashboardController from '../controllers/DashboardController.js';
+import express from 'express';
+import cors from 'cors';
 
-const routes = Router();
-const produtoController = new ProdutoController(); 
+// Puxa o "mapa" de rotas que arrumamos lá dentro da pasta src
+import rotas from './src/routes/index.js'; 
 
-/** @swagger 
- * /produtos: 
- * get: 
- * summary: Lista todos os produtos 
- * tags: [Produtos] */
-routes.get('/produtos', produtoController.listar);
+const app = express();
 
-/** @swagger 
- * /produtos: 
- * post: 
- * summary: Cadastra produto e estoque inicial 
- * tags: [Produtos] */
-routes.post('/produtos', produtoController.criar);
+// Middlewares essenciais
+app.use(cors()); // Permite que o Front-end converse com o Back-end
+app.use(express.json()); // Permite que o Back-end entenda os dados dos modais
 
-/** @swagger 
- * /produtos/{id}: 
- * put: 
- * summary: Atualiza dados do produto 
- * tags: [Produtos] */
-routes.put('/produtos/:id', produtoController.atualizar);
+// Diz para o motor usar o nosso mapa de rotas
+app.use(rotas);
 
-/** @swagger 
- * /produtos/{id}: 
- * delete: 
- * summary: Remove produto e histórico 
- * tags: [Produtos] */
-routes.delete('/produtos/:id', produtoController.deletar);
-
-/** @swagger 
- * /movimentacoes: 
- * get: 
- * summary: Histórico de entradas e saídas 
- * tags: [Movimentações] */
-routes.get('/movimentacoes', MovimentacaoController.index);
-
-/** @swagger 
- * /movimentacoes: 
- * post: 
- * summary: Registra nova movimentação 
- * tags: [Movimentações] */
-routes.post('/movimentacoes', MovimentacaoController.store);
-
-/** @swagger 
- * /dashboard: 
- * get: 
- * summary: Indicadores financeiros e alertas 
- * tags: [Dashboard] */
-routes.get('/dashboard', DashboardController.resumo);
-
-export { routes };
+// LIGA O SERVIDOR! 🚀
+const PORT = 3002;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor voando na porta ${PORT}`);
+});

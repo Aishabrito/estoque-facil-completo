@@ -1,4 +1,16 @@
-import { LayoutDashboard, Package, ArrowUpCircle, ArrowDownCircle, Settings, LogOut, PlusCircle, Menu, X, ShieldCheck } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Package, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  Settings, 
+  LogOut, 
+  PlusCircle, 
+  Menu, 
+  X, 
+  ShieldCheck,
+  Users // Importei o ícone de usuários
+} from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState } from 'react';
 import RegistrarMovimentacao from './modals/RegistrarMovimentacao';
@@ -9,12 +21,10 @@ export default function Sidebar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // 👤 Pega os dados do usuário logado
   const usuarioJson = localStorage.getItem('usuario');
   const usuario = usuarioJson ? JSON.parse(usuarioJson) : null;
 
   const handleLogout = () => {
-    // 🧹 Limpa o cofre para segurança
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     navigate('/');
@@ -22,7 +32,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Botão Mobile */}
       <button 
         onClick={() => setIsMobileOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md text-gray-700 border border-gray-100"
@@ -30,12 +39,10 @@ export default function Sidebar() {
         <Menu size={24} />
       </button>
 
-      {/* Fundo escuro no mobile */}
       {isMobileOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileOpen(false)} />
       )}
 
-      {/* A SIDEBAR */}
       <aside className={`
         fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50
         transition-transform duration-300 ease-in-out flex flex-col
@@ -65,12 +72,19 @@ export default function Sidebar() {
           <NavItem icon={<Package size={20} />} text="Produtos" path="/produtos" active={location.pathname === '/produtos'} />
           <NavItem icon={<ArrowUpCircle size={20} />} text="Entradas" path="/entradas" active={location.pathname === '/entradas'} />
           <NavItem icon={<ArrowDownCircle size={20} />} text="Saídas" path="/saidas" active={location.pathname === '/saidas'} />
+          
+          {/* 👑 MENU EXCLUSIVO PARA ADMINS */}
+          {usuario?.isAdmin && (
+            <NavItem 
+              icon={<Users size={20} />} 
+              text="Equipe" 
+              path="/usuarios" 
+              active={location.pathname === '/usuarios'} 
+            />
+          )}
         </nav>
 
-        {/* --- RODAPÉ DA SIDEBAR --- */}
         <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-          
-          {/* Identificação do Usuário */}
           <div className="px-3 py-3 mb-2 flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
               {usuario?.nome?.charAt(0).toUpperCase() || 'U'}

@@ -1,9 +1,13 @@
 import { Router } from 'express';
+
+// 1. Importações limpas e sem duplicações
 import { ProdutoController } from '../controllers/ProdutoController.js'; 
+import AuthController from '../controllers/AuthController.js';
 import MovimentacaoController from '../controllers/MovimentacaoController.js';
 import DashboardController from '../controllers/DashboardController.js';
-import AuthController from '../controllers/AuthController.js';
-import authMiddleware from '../middlewares/authMiddleware.js';
+
+// 2. Importando as duas funções de segurança do seu middleware
+import { verificarToken, verificarAdmin } from '../middlewares/authMiddleware.js';
 
 const routes = Router();
 const produtoController = new ProdutoController(); 
@@ -16,7 +20,8 @@ routes.post('/login', AuthController.login);
 // ==========================================
 // 🛡️ BARREIRA DE SEGURANÇA GERAL (JWT)
 // ==========================================
-routes.use(authMiddleware.verificarToken);
+// 3. Usa a função que importamos diretamente
+routes.use(verificarToken);
 
 // ==========================================
 // 🔒 ROTAS PROTEGIDAS (Para toda a equipe)
@@ -30,11 +35,12 @@ routes.put('/produtos/:id', produtoController.atualizar);
 routes.delete('/produtos/:id', produtoController.deletar);
 
 routes.get('/movimentacoes', MovimentacaoController.index);
-routes.post('/movimentacoes', MovimentacaoController.store);
+routes.post('/usuarios', verificarAdmin, AuthController.registrar);
 
 // ==========================================
 // 👑 ROTAS EXCLUSIVAS DE ADMIN (Apenas o Chefe)
 // ==========================================
-routes.post('/usuarios', authMiddleware.verificarAdmin, AuthController.registrar);
+routes.post('/usuarios', verificarAdmin, AuthController.registrar);
 
-export { routes };
+// 4. Exportação padrão para o seu api/index.js achar mais fácil
+export default routes;
