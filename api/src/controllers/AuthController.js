@@ -24,7 +24,32 @@ export default {
       return res.status(500).json({ error: 'Erro ao validar sessão.' });
     }
   },
+async atualizarPerfil(req, res) {
+  try {
+    const { nome, email, senhaAtual, novaSenha } = req.body;
+    const usuario = await prisma.usuario.findUnique({ where: { id: req.usuarioId } });
+    if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
+    let senhaHash = usuario.senhaHash;
+
+    if (novaSenha) {
+      const senhaValida = await bcrypt.compare(senhaAtual, usuario.senhaHash);
+      if (!senhaValida) return res.status(400).json({ error: 'Senha atual incorreta.' });
+      const salt = await bcrypt.genSalt(10);
+      senhaHash = await bcrypt.hash(novaSenha, salt);
+    }
+
+    const atualizado = await prisma.usuario.update({
+      where: { id: req.usuarioId },
+      data: { nome, email, senhaHash },
+      select: { id: true, nome: true, email: true, isAdmin: true },
+    });
+
+    return res.json(atualizado);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao atualizar perfil.' });
+  }
+},
   async registrar(req, res) {
     try {
       const { nome, email, senha } = registroSchema.parse(req.body);

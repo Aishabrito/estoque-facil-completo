@@ -1,14 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { StockProvider } from './contexts/StockContext'; 
-
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Produtos from './pages/Produtos';
-import Entradas from './pages/Entradas';
-import Saidas from './pages/Saidas';
-import Configuracoes from './pages/Configuracoes';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { StockProvider } from './contexts/StockContext'; 
+import { StockProvider } from './contexts/StockContext';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';

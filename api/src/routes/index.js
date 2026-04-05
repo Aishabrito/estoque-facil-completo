@@ -24,6 +24,7 @@ routes.use(verificarToken);
 // 🔒 ROTAS PROTEGIDAS (Para toda a equipe)
 // ==========================================
 routes.get('/me', AuthController.me); 
+routes.put('/me', AuthController.atualizarPerfil);
 routes.get('/dashboard', DashboardController.resumo);
 
 routes.get('/produtos', produtoController.listar);

@@ -1,5 +1,4 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const StockContext = createContext();
@@ -27,12 +26,10 @@ export function StockProvider({ children }) {
     }
   }, []);
 
-  // Carrega ao iniciar
   useEffect(() => {
     refreshData();
   }, [refreshData]);
 
-  // Escuta o evento global disparado pelo modal de movimentação
   useEffect(() => {
     window.addEventListener('movimentacao-registrada', refreshData);
     return () => window.removeEventListener('movimentacao-registrada', refreshData);
@@ -45,18 +42,13 @@ export function StockProvider({ children }) {
   };
 
   return (
-    <StockContext.Provider value={{
-      products,
-      transactions,
-      loading,
-      refreshData,
-      logout,
-    }}>
+    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout }}>
       {children}
     </StockContext.Provider>
   );
 }
 
+// Exportado separado para satisfazer o react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);
 }
