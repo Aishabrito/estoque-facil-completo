@@ -1,115 +1,51 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
 
 const StockContext = createContext();
 
 export function StockProvider({ children }) {
-  // --- CARREGAR DADOS ---
-  const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('estoque-produtos');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Fone Bluetooth', category: 'Eletrônicos', price: 149.90, stock: 32, status: 'Em Estoque' },
-    ];
-  });
+  const [products, setProducts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem('estoque-transacoes');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // --- SALVAR AUTOMATICAMENTE ---
-  useEffect(() => {
-    localStorage.setItem('estoque-produtos', JSON.stringify(products));
-    localStorage.setItem('estoque-transacoes', JSON.stringify(transactions));
-  }, [products, transactions]);
-
-  // --- AUXILIAR DE STATUS ---
-  const getStatus = (qtd) => {
-    if (qtd <= 0) return 'Sem Estoque';
-    if (qtd < 10) return 'Baixo Estoque';
-    return 'Em Estoque';
-  };
-
-  // --- AÇÕES ---
-
-  const addProduct = (newProduct) => {
-    const productWithId = {
-      ...newProduct,
-      id: Date.now(),
-      price: Math.max(0, Number(newProduct.price)),
-      stock: Math.max(0, Number(newProduct.stock)),
-      status: getStatus(Number(newProduct.stock))
-    };
-    setProducts([...products, productWithId]);
-  };
-
-  const updateProduct = (id, updatedData) => {
-    const newProducts = products.map(product => {
-      if (product.id === id) {
-        const validatedStock = Math.max(0, Number(updatedData.stock));
-        return {
-          ...product,
-          ...updatedData,
-          price: Math.max(0, Number(updatedData.price)),
-          stock: validatedStock,
-          status: getStatus(validatedStock)
-        };
-      }
-      return product;
-    });
-    setProducts(newProducts);
-  };
-
-  const removeProduct = (productId) => {
-    const updatedProducts = products.filter(product => product.id !== productId);
-    setProducts(updatedProducts);
-  };
-
-  const addTransaction = (productId, type, quantity, reason) => {
-    const qtdNumber = Number(quantity);
-    const productIndex = products.findIndex(p => p.id === Number(productId));
-
-    if (productIndex === -1) return { success: false, message: "Produto não encontrado!" };
-
-    const currentProduct = products[productIndex];
-    
-    // VALIDAÇÃO: Impede saída maior que o estoque disponível
-    if (type === 'saida' && currentProduct.stock < qtdNumber) {
-      return { 
-        success: false, 
-        message: `Estoque insuficiente! Disponível: ${currentProduct.stock} un.` 
-      };
+  // --- BUSCAR DADOS DA API ---
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      // Busca produtos e movimentações em paralelo
+      const [prodRes, transRes] = await Promise.all([
+        api.get('/produtos'),
+        api.get('/movimentacoes')
+      ]);
+      
+      setProducts(prodRes.data);
+      setTransactions(transRes.data);
+    } catch (error) {
+      console.error("Erro ao sincronizar com o banco:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const updatedProducts = products.map(product => {
-      if (product.id === Number(productId)) {
-        const currentStock = Number(product.stock);
-        const newStock = type === 'entrada' ? currentStock + qtdNumber : currentStock - qtdNumber;
-        return { ...product, stock: newStock, status: getStatus(newStock) };
-      }
-      return product;
-    });
+  // Carrega os dados assim que o App abre
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      refreshData();
+    }
+  }, []);
 
-    setProducts(updatedProducts);
+  // --- AÇÕES (Agora apenas disparam o refresh ou atualizam o cache) ---
 
-    const newTransaction = {
-      id: Date.now(),
-      productId: Number(productId),
-      productName: currentProduct.name,
-      type,
-      quantity: qtdNumber,
-      reason,
-      date: new Date().toLocaleDateString('pt-BR')
-    };
-
-    setTransactions([newTransaction, ...transactions]);
-    return { success: true };
+  const updateList = () => {
+    refreshData(); // Função simples para as páginas forçarem uma atualização
   };
 
   const clearAllData = () => {
-    if(window.confirm("Isso apagará todos os dados salvos. Continuar?")) {
-        localStorage.removeItem('estoque-produtos');
-        localStorage.removeItem('estoque-transacoes');
-        window.location.reload();
+    if(window.confirm("Isso apenas limpa sua sessão local. Os dados no banco de dados do Supabase continuarão salvos. Deseja sair?")) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        window.location.href = '/';
     }
   };
 
@@ -117,10 +53,9 @@ export function StockProvider({ children }) {
     <StockContext.Provider value={{ 
       products, 
       transactions, 
-      addProduct, 
-      updateProduct, 
-      removeProduct, 
-      addTransaction, 
+      loading,
+      updateList, // Para as páginas avisarem que algo mudou
+      refreshData,
       clearAllData 
     }}>
       {children}
@@ -128,7 +63,6 @@ export function StockProvider({ children }) {
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);
 }

@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-// O StockProvider PRECISA estar importado aqui
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { StockProvider } from './contexts/StockContext'; 
 
 import Login from './pages/Login';
@@ -9,18 +8,47 @@ import Entradas from './pages/Entradas';
 import Saidas from './pages/Saidas';
 import Configuracoes from './pages/Configuracoes';
 
+// --- COMPONENTE DE SEGURANÇA (O Guardião) ---
+// Ele verifica se existe um token no cofre do navegador.
+// Se não existir, ele redireciona para a página de Login (/).
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/" />;
+}
+
 function App() {
   return (
-    // O StockProvider PRECISA abraçar o BrowserRouter
     <StockProvider>
       <BrowserRouter>
         <Routes>
+          {/* Rota Pública */}
           <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/entradas" element={<Entradas />} />
-          <Route path="/saidas" element={<Saidas />} />
-          <Route path="/configuracoes" element={<Configuracoes />} />
+
+          {/* 🔒 ROTAS PROTEGIDAS 🔒 */}
+          {/* Agora todas as páginas internas estão "trancadas" */}
+          <Route 
+            path="/dashboard" 
+            element={<PrivateRoute><Dashboard /></PrivateRoute>} 
+          />
+          <Route 
+            path="/produtos" 
+            element={<PrivateRoute><Produtos /></PrivateRoute>} 
+          />
+          <Route 
+            path="/entradas" 
+            element={<PrivateRoute><Entradas /></PrivateRoute>} 
+          />
+          <Route 
+            path="/saidas" 
+            element={<PrivateRoute><Saidas /></PrivateRoute>} 
+          />
+          <Route 
+            path="/configuracoes" 
+            element={<PrivateRoute><Configuracoes /></PrivateRoute>} 
+          />
+
+          {/* Rota de "Não Encontrado" - Redireciona para o Login ou Dash */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
     </StockProvider>

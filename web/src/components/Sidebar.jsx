@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ArrowUpCircle, ArrowDownCircle, Settings, LogOut, PlusCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, ArrowUpCircle, ArrowDownCircle, Settings, LogOut, PlusCircle, Menu, X, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState } from 'react';
 import RegistrarMovimentacao from './modals/RegistrarMovimentacao';
@@ -9,16 +9,23 @@ export default function Sidebar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // 👤 Pega os dados do usuário logado
+  const usuarioJson = localStorage.getItem('usuario');
+  const usuario = usuarioJson ? JSON.parse(usuarioJson) : null;
+
   const handleLogout = () => {
+    // 🧹 Limpa o cofre para segurança
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
     navigate('/');
   };
 
   return (
     <>
-      {/* Botão Mobile  */}
+      {/* Botão Mobile */}
       <button 
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md text-gray-700"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md text-gray-700 border border-gray-100"
       >
         <Menu size={24} />
       </button>
@@ -28,17 +35,17 @@ export default function Sidebar() {
         <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileOpen(false)} />
       )}
 
-      {/* A SIDEBAR -  */}
+      {/* A SIDEBAR */}
       <aside className={`
         fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50
-        transition-transform duration-300 ease-in-out
+        transition-transform duration-300 ease-in-out flex flex-col
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0
       `}>
         
         <div className="p-6 border-b border-gray-100 flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <span className="text-xl font-bold text-gray-800">Estoque Fácil</span>
+            <span className="text-xl font-bold text-blue-900">Estoque Fácil</span>
             <button onClick={() => setIsMobileOpen(false)} className="md:hidden text-gray-500">
               <X size={24} />
             </button>
@@ -46,7 +53,7 @@ export default function Sidebar() {
           
           <button 
             onClick={() => { setIsModalOpen(true); setIsMobileOpen(false); }}
-            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm"
+            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all active:scale-95"
           >
             <PlusCircle size={20} />
             Movimentar
@@ -60,15 +67,39 @@ export default function Sidebar() {
           <NavItem icon={<ArrowDownCircle size={20} />} text="Saídas" path="/saidas" active={location.pathname === '/saidas'} />
         </nav>
 
-        <div className="p-4 border-t border-gray-100 space-y-1">
-          <Link to="/configuracoes" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
+        {/* --- RODAPÉ DA SIDEBAR --- */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+          
+          {/* Identificação do Usuário */}
+          <div className="px-3 py-3 mb-2 flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+              {usuario?.nome?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-800 truncate w-32">
+                {usuario?.nome || 'Usuário'}
+              </span>
+              {usuario?.isAdmin && (
+                <span className="text-[10px] flex items-center gap-1 text-emerald-600 font-bold uppercase tracking-wider">
+                  <ShieldCheck size={10} /> Admin
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Link to="/configuracoes" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               <Settings size={20} />
               Configurações
-          </Link>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg">
-            <LogOut size={20} />
-            Sair
-          </button>
+            </Link>
+            <button 
+              onClick={handleLogout} 
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut size={20} />
+              Sair
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -79,7 +110,14 @@ export default function Sidebar() {
 
 function NavItem({ icon, text, path, active }) {
   return (
-    <Link to={path} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${active ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+    <Link 
+      to={path} 
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+        active 
+        ? 'bg-blue-50 text-blue-700' 
+        : 'text-gray-600 hover:bg-gray-50'
+      }`}
+    >
       {icon}
       {text}
     </Link>
