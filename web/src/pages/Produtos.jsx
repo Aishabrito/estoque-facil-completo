@@ -1,10 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import CriarNovoProduto from '../components/modals/CriarNovoProduto';
-import { Search, Plus, Edit, Trash2, PackageX, Loader2, CheckCircle, XCircle, X } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, PackageX, Loader2, CheckCircle, XCircle, X, Download } from 'lucide-react';
 import api from '../services/api';
 
-// Toast simples, sem biblioteca externa
+function exportarProdutosCSV(produtos) {
+  const cabecalho = ['Nome', 'Categoria', 'Preço Custo', 'Preço Venda', 'Em Estoque', 'Estoque Mínimo', 'Status'];
+  const linhas = produtos.map(p => [
+    p.nome,
+    p.categoria || '-',
+    Number(p.precoCusto || 0).toFixed(2).replace('.', ','),
+    Number(p.preco).toFixed(2).replace('.', ','),
+    p.estoque,
+    p.estoqueMinimo ?? 5,
+    p.estoque === 0 ? 'Sem Estoque' : p.estoque <= (p.estoqueMinimo ?? 5) ? 'Estoque Baixo' : 'Disponível',
+  ]);
+
+  const csvContent = [cabecalho, ...linhas]
+    .map(row => row.map(v => `"${v}"`).join(';'))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'produtos.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function Toast({ message, type, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
@@ -12,7 +36,7 @@ function Toast({ message, type, onClose }) {
   }, [onClose]);
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl text-white text-sm font-semibold animate-fade-in
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl text-white text-sm font-semibold
       ${type === 'success' ? 'bg-emerald-600' : 'bg-red-500'}`}>
       {type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
       {message}
@@ -56,8 +80,10 @@ export default function Produtos() {
       const payload = {
         nome: dadosDoFormulario.nome,
         categoria: dadosDoFormulario.categoria,
+        precoCusto: Number(dadosDoFormulario.precoCusto) || 0,
         preco: Number(dadosDoFormulario.preco),
         estoque: Number(dadosDoFormulario.estoque),
+        estoqueMinimo: Number(dadosDoFormulario.estoqueMinimo) || 5,
       };
       if (editingProduct) {
         await api.put(`/produtos/${editingProduct.id}`, payload);
@@ -87,7 +113,7 @@ export default function Produtos() {
 
   const filteredProducts = products.filter(product =>
     product.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -97,20 +123,30 @@ export default function Produtos() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 w-full transition-all">
+
+        {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estoque Geral</h1>
             <p className="text-sm text-gray-500 font-medium">Controle total de itens e categorias</p>
           </div>
-          <button
-            onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-emerald-100 active:scale-95"
-          >
-            <Plus size={20} />
-            Cadastrar Item
-          </button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              onClick={() => exportarProdutosCSV(filteredProducts)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-bold transition-all shadow-sm"
+            >
+              <Download size={16} /> CSV
+            </button>
+            <button
+              onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-emerald-100 active:scale-95"
+            >
+              <Plus size={20} /> Cadastrar Item
+            </button>
+          </div>
         </div>
 
+        {/* Busca */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -124,6 +160,7 @@ export default function Produtos() {
           </div>
         </div>
 
+        {/* Tabela */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             {loading ? (
@@ -137,7 +174,7 @@ export default function Produtos() {
                   <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase text-gray-400 font-black tracking-widest">
                     <th className="p-5">Produto</th>
                     <th className="p-5">Categoria</th>
-                    <th className="p-5">Preço Unitário</th>
+                    <th className="p-5">Preço Venda</th>
                     <th className="p-5">Em Estoque</th>
                     <th className="p-5">Status</th>
                     <th className="p-5 text-right">Gerenciar</th>
@@ -150,7 +187,7 @@ export default function Produtos() {
                         <td className="p-5 font-bold text-gray-900">{product.nome}</td>
                         <td className="p-5">
                           <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                            {product.categoria}
+                            {product.categoria || '—'}
                           </span>
                         </td>
                         <td className="p-5 font-black text-gray-700 text-sm">
@@ -160,13 +197,17 @@ export default function Produtos() {
                           {product.estoque} <span className="text-[10px] font-medium text-gray-400 uppercase">un.</span>
                         </td>
                         <td className="p-5">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border
+                          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border
                             ${product.estoque === 0
                               ? 'bg-red-50 text-red-700 border-red-100'
-                              : product.estoque < 10
-                              ? 'bg-orange-50 text-orange-700 border-orange-100'
+                              : product.estoque <= (product.estoqueMinimo ?? 5)
+                              ? 'bg-orange-50 text-orange-700 border-orange-100 animate-pulse'
                               : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
-                            {product.estoque === 0 ? 'Sem Estoque' : product.estoque < 10 ? 'Baixo Estoque' : 'Disponível'}
+                            {product.estoque === 0
+                              ? '⚠ Sem Estoque'
+                              : product.estoque <= (product.estoqueMinimo ?? 5)
+                              ? '⚠ Estoque Baixo'
+                              : 'Disponível'}
                           </span>
                         </td>
                         <td className="p-5 text-right">

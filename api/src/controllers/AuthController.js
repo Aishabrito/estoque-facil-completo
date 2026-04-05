@@ -24,32 +24,34 @@ export default {
       return res.status(500).json({ error: 'Erro ao validar sessão.' });
     }
   },
-async atualizarPerfil(req, res) {
-  try {
-    const { nome, email, senhaAtual, novaSenha } = req.body;
-    const usuario = await prisma.usuario.findUnique({ where: { id: req.usuarioId } });
-    if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
-    let senhaHash = usuario.senhaHash;
+  async atualizarPerfil(req, res) {
+    try {
+      const { nome, email, senhaAtual, novaSenha } = req.body;
+      const usuario = await prisma.usuario.findUnique({ where: { id: req.usuarioId } });
+      if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado.' });
 
-    if (novaSenha) {
-      const senhaValida = await bcrypt.compare(senhaAtual, usuario.senhaHash);
-      if (!senhaValida) return res.status(400).json({ error: 'Senha atual incorreta.' });
-      const salt = await bcrypt.genSalt(10);
-      senhaHash = await bcrypt.hash(novaSenha, salt);
+      let senhaHash = usuario.senhaHash;
+
+      if (novaSenha) {
+        const senhaValida = await bcrypt.compare(senhaAtual, usuario.senhaHash);
+        if (!senhaValida) return res.status(400).json({ error: 'Senha atual incorreta.' });
+        const salt = await bcrypt.genSalt(10);
+        senhaHash = await bcrypt.hash(novaSenha, salt);
+      }
+
+      const atualizado = await prisma.usuario.update({
+        where: { id: req.usuarioId },
+        data: { nome, email, senhaHash },
+        select: { id: true, nome: true, email: true, isAdmin: true },
+      });
+
+      return res.json(atualizado);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao atualizar perfil.' });
     }
+  },
 
-    const atualizado = await prisma.usuario.update({
-      where: { id: req.usuarioId },
-      data: { nome, email, senhaHash },
-      select: { id: true, nome: true, email: true, isAdmin: true },
-    });
-
-    return res.json(atualizado);
-  } catch (error) {
-    return res.status(500).json({ error: 'Erro ao atualizar perfil.' });
-  }
-},
   async registrar(req, res) {
     try {
       const { nome, email, senha } = registroSchema.parse(req.body);
@@ -66,7 +68,7 @@ async atualizarPerfil(req, res) {
       const hashGerado = await bcrypt.hash(senha, salt);
 
       const novoUsuario = await prisma.usuario.create({
-        data: { nome, email, senhaHash: hashGerado, isAdmin } 
+        data: { nome, email, senhaHash: hashGerado, isAdmin }
       });
 
       return res.status(201).json({
@@ -94,19 +96,14 @@ async atualizarPerfil(req, res) {
 
     try {
       const usuario = await prisma.usuario.findUnique({ where: { email } });
-      if (!usuario) {
-        return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
-      }
+      if (!usuario) return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
 
       const senhaValida = await bcrypt.compare(senha, usuario.senhaHash);
-      
-      if (!senhaValida) {
-        return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
-      }
+      if (!senhaValida) return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
 
       const token = jwt.sign(
-        { id: usuario.id, isAdmin: usuario.isAdmin }, 
-        process.env.JWT_SECRET || 'segredo_padrao_para_desenvolvimento', 
+        { id: usuario.id, isAdmin: usuario.isAdmin },
+        process.env.JWT_SECRET || 'segredo_padrao_para_desenvolvimento',
         { expiresIn: '1d' }
       );
 
@@ -116,12 +113,11 @@ async atualizarPerfil(req, res) {
       });
 
     } catch (error) {
-      console.error("🔥 ERRO REAL NO LOGIN:", error);
+      console.error("ERRO NO LOGIN:", error);
       return res.status(500).json({ error: 'Erro ao fazer login.' });
     }
   },
 
-  // 💡 FUNÇÃO NOVA: Para listar a equipe no painel Admin
   async listarUsuarios(req, res) {
     try {
       const usuarios = await prisma.usuario.findMany({

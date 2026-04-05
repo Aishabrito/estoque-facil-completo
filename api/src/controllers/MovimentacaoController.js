@@ -6,7 +6,12 @@ export default {
     try {
       const movimentacoes = await prisma.movimentacao.findMany({
         orderBy: { data: 'desc' },
-        include: { produto: true }
+        include: {
+          produto: true,
+          usuario: {
+            select: { id: true, nome: true, isAdmin: true }
+          }
+        }
       });
       return res.json(movimentacoes);
     } catch (err) {
@@ -18,12 +23,13 @@ export default {
     const { produtoId, tipo, qtd, reason, motivo } = req.body;
 
     const id = Number(produtoId);
-    const quantidade = Math.abs(Number(qtd)); 
-    const tipoFormatado = tipo ? String(tipo).trim().toUpperCase() : ''; 
+    const quantidade = Math.abs(Number(qtd));
+    const tipoFormatado = tipo ? String(tipo).trim().toUpperCase() : '';
     const motivoFinal = motivo || reason || 'Movimentação manual';
+    const usuarioId = req.usuarioId; // vem do token via verificarToken
 
     if (!id || !quantidade || !tipoFormatado) {
-        return res.status(400).json({ error: "Dados incompletos (ID, Tipo e Qtd são obrigatórios)." });
+      return res.status(400).json({ error: "Dados incompletos (ID, Tipo e Qtd são obrigatórios)." });
     }
 
     try {
@@ -33,24 +39,23 @@ export default {
 
         let operacao;
         if (tipoFormatado === 'ENTRADA') {
-            operacao = { increment: quantidade };
-        } 
-        else if (tipoFormatado === 'SAIDA') {
-            if (Number(produto.estoque) < quantidade) {
-                throw new Error(`Saldo insuficiente. Estoque atual: ${produto.estoque}`);
-            }
-            operacao = { decrement: quantidade };
-        } 
-        else {
-            throw new Error(`Tipo inválido: ${tipoFormatado}`);
+          operacao = { increment: quantidade };
+        } else if (tipoFormatado === 'SAIDA') {
+          if (Number(produto.estoque) < quantidade) {
+            throw new Error(`Saldo insuficiente. Estoque atual: ${produto.estoque}`);
+          }
+          operacao = { decrement: quantidade };
+        } else {
+          throw new Error(`Tipo inválido: ${tipoFormatado}`);
         }
 
         const mov = await tx.movimentacao.create({
-          data: { 
-              produtoId: id, 
-              tipo: tipoFormatado, 
-              qtd: quantidade,
-              motivo: motivoFinal 
+          data: {
+            produtoId: id,
+            tipo: tipoFormatado,
+            qtd: quantidade,
+            motivo: motivoFinal,
+            usuarioId: usuarioId ?? null,
           }
         });
 
