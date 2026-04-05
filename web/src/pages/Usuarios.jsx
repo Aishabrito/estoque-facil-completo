@@ -6,21 +6,17 @@ import { Users, UserPlus, Loader2, Shield, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 
 export default function Usuarios() {
-  // --- 1. ESTADOS (HOOKS NO TOPO) ---
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
 
-  // Pega os dados do usuário logado do "cofre" local
   const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || '{}');
 
-  // --- 2. FUNÇÃO DE BUSCA (MEMORIZADA) ---
   const carregarUsuarios = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      // 🚀 Chama a rota real do seu Backend
       const response = await api.get('/usuarios'); 
       setUsuarios(response.data);
     } catch (err) {
@@ -31,27 +27,22 @@ export default function Usuarios() {
     }
   }, []);
 
-  // --- 3. EFEITO DE CARREGAMENTO ---
   useEffect(() => {
     if (usuarioLogado.isAdmin) {
       carregarUsuarios();
     }
   }, [carregarUsuarios, usuarioLogado.isAdmin]);
 
-  // --- 4. PROTEÇÃO DE ROTA (SEGURANÇA) ---
-  // Se não for admin, nem renderiza o resto, manda direto pro dashboard
   if (!usuarioLogado.isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // --- 5. RENDERIZAÇÃO DA PÁGINA ---
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       <Sidebar />
       
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 w-full transition-all">
         
-        {/* Cabeçalho de Ações */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -69,7 +60,6 @@ export default function Usuarios() {
           </button>
         </div>
 
-        {/* Alerta de Erro caso a API falhe */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-2 animate-shake">
             <AlertCircle size={20} />
@@ -77,7 +67,6 @@ export default function Usuarios() {
           </div>
         )}
 
-        {/* Tabela de Dados */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {loading ? (
             <div className="p-24 flex flex-col items-center justify-center text-gray-400 gap-4">
@@ -106,7 +95,7 @@ export default function Usuarios() {
                             </div>
                             <div>
                               <p className="font-bold text-gray-900 leading-tight">{user.nome}</p>
-                              <p className="text-[10px] text-gray-400 font-medium">ID: {user.id.substring(0, 8)}...</p>
+                              <p className="text-[10px] text-gray-400 font-medium">ID: {String(user.id).padStart(4, '0')}</p>
                             </div>
                           </div>
                         </td>
@@ -147,7 +136,6 @@ export default function Usuarios() {
         </div>
       </main>
 
-      {/* Modal de Cadastro (O onSave chama carregarUsuarios para atualizar a lista) */}
       <CriarUsuario 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

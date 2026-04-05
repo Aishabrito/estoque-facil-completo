@@ -1,4 +1,5 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const StockContext = createContext();
@@ -8,55 +9,48 @@ export function StockProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- BUSCAR DADOS DA API ---
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
     try {
       setLoading(true);
-      // Busca produtos e movimentações em paralelo
       const [prodRes, transRes] = await Promise.all([
         api.get('/produtos'),
-        api.get('/movimentacoes')
+        api.get('/movimentacoes'),
       ]);
-      
       setProducts(prodRes.data);
       setTransactions(transRes.data);
     } catch (error) {
-      console.error("Erro ao sincronizar com o banco:", error);
+      console.error('Erro ao sincronizar com o banco:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Carrega os dados assim que o App abre
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      refreshData();
-    }
   }, []);
 
-  // --- AÇÕES (Agora apenas disparam o refresh ou atualizam o cache) ---
+  // Carrega ao iniciar
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
-  const updateList = () => {
-    refreshData(); // Função simples para as páginas forçarem uma atualização
-  };
+  // Escuta o evento global disparado pelo modal de movimentação
+  useEffect(() => {
+    window.addEventListener('movimentacao-registrada', refreshData);
+    return () => window.removeEventListener('movimentacao-registrada', refreshData);
+  }, [refreshData]);
 
-  const clearAllData = () => {
-    if(window.confirm("Isso apenas limpa sua sessão local. Os dados no banco de dados do Supabase continuarão salvos. Deseja sair?")) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        window.location.href = '/';
-    }
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    window.location.href = '/';
   };
 
   return (
-    <StockContext.Provider value={{ 
-      products, 
-      transactions, 
+    <StockContext.Provider value={{
+      products,
+      transactions,
       loading,
-      updateList, // Para as páginas avisarem que algo mudou
       refreshData,
-      clearAllData 
+      logout,
     }}>
       {children}
     </StockContext.Provider>

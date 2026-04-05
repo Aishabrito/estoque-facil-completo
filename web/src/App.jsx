@@ -7,13 +7,25 @@ import Produtos from './pages/Produtos';
 import Entradas from './pages/Entradas';
 import Saidas from './pages/Saidas';
 import Configuracoes from './pages/Configuracoes';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { StockProvider } from './contexts/StockContext'; 
 
-// --- COMPONENTE DE SEGURANÇA (O Guardião) ---
-// Ele verifica se existe um token no cofre do navegador.
-// Se não existir, ele redireciona para a página de Login (/).
-function PrivateRoute({ children }) {
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Produtos from './pages/Produtos';
+import Entradas from './pages/Entradas';
+import Saidas from './pages/Saidas';
+import Configuracoes from './pages/Configuracoes';
+import Usuarios from './pages/Usuarios';
+
+function PrivateRoute({ children, adminOnly = false }) {
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/" />;
+  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+
+  if (!token || !usuario) return <Navigate to="/" replace />;
+  if (adminOnly && !usuario.isAdmin) return <Navigate to="/dashboard" replace />;
+
+  return children;
 }
 
 function App() {
@@ -21,38 +33,20 @@ function App() {
     <StockProvider>
       <BrowserRouter>
         <Routes>
-          {/* Rota Pública */}
           <Route path="/" element={<Login />} />
 
-          {/* 🔒 ROTAS PROTEGIDAS 🔒 */}
-          {/* Agora todas as páginas internas estão "trancadas" */}
-          <Route 
-            path="/dashboard" 
-            element={<PrivateRoute><Dashboard /></PrivateRoute>} 
-          />
-          <Route 
-            path="/produtos" 
-            element={<PrivateRoute><Produtos /></PrivateRoute>} 
-          />
-          <Route 
-            path="/entradas" 
-            element={<PrivateRoute><Entradas /></PrivateRoute>} 
-          />
-          <Route 
-            path="/saidas" 
-            element={<PrivateRoute><Saidas /></PrivateRoute>} 
-          />
-          <Route 
-            path="/configuracoes" 
-            element={<PrivateRoute><Configuracoes /></PrivateRoute>} 
-          />
+          <Route path="/dashboard"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/produtos"      element={<PrivateRoute><Produtos /></PrivateRoute>} />
+          <Route path="/entradas"      element={<PrivateRoute><Entradas /></PrivateRoute>} />
+          <Route path="/saidas"        element={<PrivateRoute><Saidas /></PrivateRoute>} />
+          <Route path="/configuracoes" element={<PrivateRoute><Configuracoes /></PrivateRoute>} />
+          <Route path="/usuarios"      element={<PrivateRoute adminOnly={true}><Usuarios /></PrivateRoute>} />
 
-          {/* Rota de "Não Encontrado" - Redireciona para o Login ou Dash */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
     </StockProvider>
-  )
+  );
 }
 
 export default App;

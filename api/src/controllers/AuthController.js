@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 const prisma = new PrismaClient();
 
-// Validação profissional com Zod
 const registroSchema = z.object({
   nome: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
   email: z.string().email("E-mail inválido"),
@@ -13,7 +12,6 @@ const registroSchema = z.object({
 });
 
 export default {
-  // --- CHECK-UP DE USUÁRIO ---
   async me(req, res) {
     try {
       const usuario = await prisma.usuario.findUnique({
@@ -27,7 +25,6 @@ export default {
     }
   },
 
-  // --- REGISTRAR USUÁRIO ---
   async registrar(req, res) {
     try {
       const { nome, email, senha } = registroSchema.parse(req.body);
@@ -41,10 +38,10 @@ export default {
       const isAdmin = totalUsuarios === 0;
 
       const salt = await bcrypt.genSalt(10);
-      const senhaHash = await bcrypt.hash(senha, salt);
+      const hashGerado = await bcrypt.hash(senha, salt);
 
       const novoUsuario = await prisma.usuario.create({
-        data: { nome, email, senhaHash, isAdmin }
+        data: { nome, email, senhaHash: hashGerado, isAdmin } 
       });
 
       return res.status(201).json({
@@ -52,7 +49,7 @@ export default {
         nome: novoUsuario.nome,
         email: novoUsuario.email,
         isAdmin: novoUsuario.isAdmin,
-        mensagem: isAdmin ? 'Primeiro Admin criado com sucesso!' : 'Usuário criado com sucesso!'
+        mensagem: isAdmin ? 'Primeiro Admin criado!' : 'Usuário criado!'
       });
 
     } catch (error) {
@@ -63,7 +60,6 @@ export default {
     }
   },
 
-  // --- LOGIN ---
   async login(req, res) {
     const { email, senha } = req.body;
 
@@ -78,6 +74,7 @@ export default {
       }
 
       const senhaValida = await bcrypt.compare(senha, usuario.senhaHash);
+      
       if (!senhaValida) {
         return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
       }
@@ -94,7 +91,21 @@ export default {
       });
 
     } catch (error) {
+      console.error("🔥 ERRO REAL NO LOGIN:", error);
       return res.status(500).json({ error: 'Erro ao fazer login.' });
+    }
+  },
+
+  // 💡 FUNÇÃO NOVA: Para listar a equipe no painel Admin
+  async listarUsuarios(req, res) {
+    try {
+      const usuarios = await prisma.usuario.findMany({
+        select: { id: true, nome: true, email: true, isAdmin: true, criadoEm: true },
+        orderBy: { criadoEm: 'desc' }
+      });
+      return res.json(usuarios);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao listar equipe.' });
     }
   }
 };
