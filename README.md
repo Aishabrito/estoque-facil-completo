@@ -1,69 +1,157 @@
-# 📦 Estoque Fácil - Sistema de Gestão
+<h1 align="center">
+  <img src="https://img.shields.io/badge/Estoque%20Fácil-000?style=for-the-badge&logo=react&logoColor=61DAFB" alt="Estoque Fácil" />
+</h1>
 
-> 🚧 **Status:** Em desenvolvimento (MVP - Minimum Viable Product)
+<p align="center">
+  Sistema <strong>Fullstack</strong> de gestão de inventário e fluxo de caixa — com PDV sincronizado, controle de acesso por perfil (RBAC) e painel de indicadores operacionais.
+</p>
 
-## 🎯 Sobre o Projeto
-
-O **Estoque Fácil** é uma aplicação Fullstack desenvolvida para facilitar o controle de entrada e saída de produtos para pequenos comércios.
-
-Como desenvolvedora Júnior, meu principal objetivo com este projeto é criar um laboratório prático para conectar um **Front-end moderno** com um **Banco de Dados relacional**, entendendo a fundo o fluxo da informação e a arquitetura de software.
-
----
-
-## 💡 Objetivos de Aprendizado
-
-Não é apenas sobre criar telas, é sobre entender o sistema completo. Neste projeto, estou focada em:
-
-- **Integração Fullstack:** Consumir uma API RESTful (Node.js) através de uma aplicação React.
-- **Modelagem de Dados:** Criar schemas relacionais eficientes com Prisma e PostgreSQL.
-- **Gerenciamento de Estado:** Manipular dados no Front-end garantindo que a interface reaja instantaneamente às mudanças do banco.
-- **Boas Práticas:** Implementar validações e tratamento de erros para evitar quebras no sistema.
+<p align="center">
+  <a href="https://estoque-facil-completo.vercel.app" target="_blank">
+    <img src="https://img.shields.io/badge/🚀%20Demo%20ao%20vivo-Vercel-black?style=for-the-badge&logo=vercel" />
+  </a>
+  <img src="https://img.shields.io/badge/Status-Concluído-22c55e?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Licença-MIT-blue?style=for-the-badge" />
+</p>
 
 ---
 
-## 🛠️ Tech Stack
+## 🔑 Acesso para Demonstração
 
-Utilizei uma stack robusta e amplamente solicitada pelo mercado:
-
-### Front-end
-- ![React](https://img.shields.io/badge/-React-20232A?style=flat-square&logo=react&logoColor=61DAFB) **React.js:** Construção da interface baseada em componentes.
-- ![Tailwind](https://img.shields.io/badge/-Tailwind-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) **Tailwind CSS:** Estilização responsiva e ágil.
-- ![Vite](https://img.shields.io/badge/-Vite-646CFF?style=flat-square&logo=vite&logoColor=white) **Vite:** Build tool para alta performance.
-
-### Back-end & Dados
-- ![Node](https://img.shields.io/badge/-Node.js-43853D?style=flat-square&logo=node.js&logoColor=white) **Node.js & Express:** Servidor e rotas da API.
-- ![Prisma](https://img.shields.io/badge/-Prisma-2d3748?style=flat-square&logo=prisma&logoColor=white) **Prisma ORM:** Abstração e segurança na comunicação com o banco.
-- ![Postgres](https://img.shields.io/badge/-PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white) **PostgreSQL:** Banco de dados relacional.
+| Perfil | E-mail | Senha |
+| :--- | :--- | :--- |
+| **Administrador** | `demo@estoquefacil.com` | `demo123` |
 
 ---
 
-## 🧠 Desafios & Soluções Técnicas
+## 💡 Sobre o projeto
 
-> *Os principais obstáculos que enfrentei e superei durante o desenvolvimento:*
+O **Estoque Fácil** é um MVP voltado para a digitalização de processos em pequenos comércios. O foco foi construir uma integração Fullstack real e consistente — cobrindo modelagem de banco de dados, API REST, autenticação, controle de acesso e deploy em produção.
 
-* **1. Política de CORS:** Tive problemas iniciais ao conectar o Front-end (porta 5173) com a API (porta 3000). Resolvi configurando corretamente os headers e o middleware `cors` no Express, entendendo na prática como os navegadores bloqueiam requisições entre origens diferentes.
-
-* **2. Sincronia de Estado (React):** Um desafio foi manter a UI atualizada após o cadastro de um produto sem precisar recarregar a página. A solução foi refatorar a lógica para atualizar o estado local (`setState`) assim que a API retorna o sucesso (Optimistic UI updates).
-
-* **3. Modelagem com Prisma:** Definir relacionamentos no banco de dados (ex: Categorias e Produtos) exigiu estudo da documentação do Prisma ORM para entender como funcionam as *Foreign Keys* e migrações.
-
-* **4. Error Handling:** Para evitar que o servidor "caísse" ao receber dados incompletos no `POST`, implementei blocos `try/catch` nos controllers, garantindo que a API sempre responda com status codes apropriados (400, 500) e mensagens claras.
+O projeto vai além do CRUD: implementa autenticação com JWT, controle de acesso por perfil (RBAC), validação rigorosa de dados no servidor e sincronização reativa entre componentes no frontend.
 
 ---
 
-## 🚀 Como rodar o projeto localmente
+## 🚀 Funcionalidades
 
-Para testar o código na sua máquina:
+### 📊 Dashboard de Indicadores
+- Faturamento mensal calculado via agregações do Prisma
+- Monitoramento de patrimônio (custo) e receita potencial (valor de venda)
+- Alertas visuais para produtos abaixo do estoque mínimo configurado
+- Feed em tempo real das últimas 10 movimentações do sistema
 
+### 🛒 PDV (Ponto de Venda)
+- Carrinho dinâmico com validação de estoque disponível em tempo real
+- Seleção de forma de pagamento: Pix, Cartão ou Dinheiro
+- Baixa automática no estoque ao confirmar a venda
+- Dashboard e Histórico atualizam instantaneamente, sem recarregar a página
+
+### 🔐 Autenticação e Controle de Acesso (RBAC)
+- Sessões protegidas com JWT
+- Perfis diferenciados: Admin (gestão total) e Usuário (operações básicas)
+- Painel de gestão de equipe exclusivo para administradores
+- Rotas protegidas por middleware de autorização no backend
+
+---
+
+## 🛠️ Tecnologias
+
+**Backend**
+
+| Tecnologia | Uso |
+| :--- | :--- |
+| Node.js + Express | Servidor e API REST |
+| Prisma ORM | Comunicação e migrations do banco |
+| PostgreSQL (Supabase) | Banco de dados em produção |
+| JWT + Bcrypt | Autenticação e hash de senhas |
+| Zod | Validação de schemas |
+| Render | Deploy da API |
+
+**Frontend**
+
+| Tecnologia | Uso |
+| :--- | :--- |
+| React.js + Vite | Interface reativa e build otimizado |
+| Tailwind CSS | Estilização utilitária |
+| Recharts | Gráficos do dashboard |
+| Lucide Icons | Ícones |
+| Vercel | Deploy do frontend |
+
+---
+
+## 🏗️ Arquitetura
+**Fluxo de dados:**
+`Usuário → React (Vercel) → API REST (Render) → Prisma ORM → PostgreSQL (Supabase)`
+
+---
+
+## ⚙️ Como rodar localmente
+
+**Pré-requisitos:** Node.js v18+, npm, conta no Supabase (ou PostgreSQL local)
+
+**1. Clone o repositório**
 ```bash
-# 1. Clone o repositório
-git clone [https://github.com/Aishabrito/estoque-facil.git](https://github.com/Aishabrito/estoque-facil.git)
+git clone https://github.com/Aishabrito/estoque-facil-completo.git
+cd estoque-facil-completo
+```
 
-# 2. Instale as dependências
+**2. Configure e rode o backend**
+```bash
+cd api
 npm install
-
-# 3. Configure as variáveis de ambiente
-# Crie um arquivo .env na raiz baseado no .env.example
-
-# 4. Inicie o projeto (Front e Back)
+cp .env.example .env   # preencha as variáveis
+npx prisma migrate dev
 npm run dev
+# servidor disponível em http://localhost:3333
+```
+
+**3. Configure e rode o frontend**
+```bash
+cd ../web
+npm install
+cp .env.example .env   # informe a URL da API
+npm run dev
+# aplicação disponível em http://localhost:5173
+```
+
+---
+
+## 🔑 Variáveis de Ambiente
+
+**api/.env**
+```env
+DATABASE_URL="postgresql://usuario:senha@host:5432/estoque_facil"
+JWT_SECRET="sua_chave_secreta_aqui"
+PORT=3333
+```
+
+**web/.env**
+```env
+VITE_API_URL="http://localhost:3333"
+```
+
+> ⚠️ Nunca suba arquivos `.env` para o repositório. Confirme que `.env` está no `.gitignore`.
+
+---
+
+## 🧠 Decisões Técnicas
+
+**Sincronização entre componentes sem gerenciador de estado externo**
+Para que o Dashboard atualize após uma venda sem recarregar a página, utilizei `CustomEvents` nativos do JavaScript — uma solução leve para comunicação entre componentes irmãos, sem a necessidade de Redux ou Context API global.
+
+**Integridade de dados garantida no servidor**
+A validação de estoque negativo é feita no backend via Prisma antes de qualquer escrita no banco. Se qualquer etapa falha, a operação é revertida — garantindo consistência do inventário independente do cliente.
+
+**Deploy Fullstack em produção**
+Configurei CORS entre domínios diferentes, variáveis de ambiente no Render e Vercel, e banco PostgreSQL externo no Supabase — lidando com os desafios reais de um ambiente de produção.
+
+**Segurança com JWT e RBAC**
+Dois níveis de acesso (Admin/Usuário) com middleware de autorização no backend e proteção de rotas no frontend — garantindo que cada perfil acesse apenas o que deve.
+
+---
+
+<p align="center">
+  Desenvolvido por <strong>Aísha Brito</strong>
+  <br><br>
+  Se esse projeto te ajudou ou te inspirou, deixa uma ⭐
+</p>
