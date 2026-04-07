@@ -18,3 +18,8 @@ const PORT = 3002;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor voando na porta ${PORT}`);
 });
+app.use(cors({
+  origin: '*', // Permite que qualquer origem (como a sua Vercel) acesse
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));

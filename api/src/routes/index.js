@@ -15,7 +15,8 @@ const produtoController = new ProdutoController();
 // 🔓 ROTAS PÚBLICAS
 // ==========================================
 routes.post('/login', AuthController.login);
-
+routes.post('/login', AuthController.login);
+routes.post('/usuarios/registrar-inicial', AuthController.registrar); // Adicione essa linha temporária
 // ==========================================
 // 🛡️ BARREIRA DE SEGURANÇA GERAL (JWT)
 // ==========================================
