@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   TrendingUp, TrendingDown, AlertTriangle, Package,
-  DollarSign, Activity, Loader2, ShoppingBag
-} from 'lucide-react';
+  DollarSign, Activity, Loader2, ShoppingBag, Calendar
+} from 'lucide-react'; // Adicionei Calendar para o ícone novo
 import api from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -19,6 +19,7 @@ export default function Dashboard() {
     receitaPotencial: 0,
     lucroEstimado: 0,
     baixoEstoque: 0,
+    totalVendasMes: 0, // <-- NOVO CAMPO ADICIONADO
     movimentacoes: [],
   });
 
@@ -36,6 +37,7 @@ export default function Dashboard() {
           receitaPotencial:  response.data.receitaPotencial  ?? 0,
           lucroEstimado:     response.data.lucroEstimado     ?? 0,
           baixoEstoque:      response.data.baixoEstoque      ?? 0,
+          totalVendasMes:    response.data.totalVendasMes    ?? 0, // <-- CAPTURANDO DO BACK-END
           movimentacoes:     response.data.movimentacoes     || [],
         });
       }
@@ -46,7 +48,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // OUVINTE ADICIONADO AQUI 👇
   useEffect(() => {
     fetchDashboard();
     window.addEventListener('movimentacao-registrada', fetchDashboard);
@@ -86,8 +87,15 @@ export default function Dashboard() {
           {loading && <Loader2 className="animate-spin text-emerald-600" size={20} />}
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Cards - Agora com 5 colunas para acomodar o novo card em telas grandes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <DashboardCard
+            title="Vendas do Mês"
+            value={fmt(data.totalVendasMes)}
+            sub="Faturamento atual"
+            icon={<Calendar size={22} />}
+            color="text-indigo-600" bg="bg-indigo-50"
+          />
           <DashboardCard
             title="Patrimônio em Estoque"
             value={fmt(data.valorPatrimonial)}
@@ -119,7 +127,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Segunda linha: card info + gráfico */}
+        {/* O restante do código permanece exatamente como você enviou... */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
             <div className="p-3 bg-gray-100 rounded-xl">
@@ -154,7 +162,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Últimas atividades */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
             <h2 className="font-semibold text-gray-700 text-sm">Últimas Atividades</h2>
@@ -190,7 +197,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
       </main>
     </div>
   );

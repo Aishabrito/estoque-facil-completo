@@ -6,6 +6,25 @@ export default {
     try {
       const produtos = await prisma.produto.findMany();
 
+      // --- CÁLCULO DE VENDAS DO MÊS ---
+      const agora = new Date();
+      // Cria uma data no dia 01 do mês atual às 00:00:00
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+      const vendasMes = await prisma.venda.aggregate({
+        _sum: {
+          total: true // ⚠️ Verifique se no seu Schema o campo se chama 'total' ou 'valorTotal'
+        },
+        where: {
+          data: { // ⚠️ Verifique se no seu Schema o campo de data se chama 'data' ou 'criadoEm'
+            gte: inicioMes
+          }
+        }
+      });
+
+      const totalVendasMes = Number(vendasMes._sum.total) || 0;
+      // -------------------------------
+
       const valorPatrimonial = produtos.reduce((total, p) => {
         const custo = Number(String(p.precoCusto || 0).replace(',', '.')) || 0;
         const estoque = Number(p.estoque) || 0;
@@ -22,7 +41,6 @@ export default {
         return total + (Number(p.estoque) || 0);
       }, 0);
 
-      // Categorias únicas — corrigido
       const categorias = new Set(produtos.map(p => p.categoria).filter(Boolean));
       const totalCategorias = categorias.size;
 
@@ -32,7 +50,6 @@ export default {
         return estoqueAtual <= limiteAlerta;
       }).length;
 
-      // Inclui usuario para rastreabilidade no feed
       const movimentacoes = await prisma.movimentacao.findMany({
         take: 10,
         orderBy: { data: 'desc' },
@@ -53,6 +70,7 @@ export default {
         receitaPotencial,
         lucroEstimado,
         baixoEstoque,
+        totalVendasMes, // <-- ENVIANDO PARA O FRONT-END
         movimentacoes
       });
 
