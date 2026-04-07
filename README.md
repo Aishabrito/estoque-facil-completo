@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  Sistema <strong>Fullstack</strong> de gestão de inventário e fluxo de caixa — com PDV sincronizado, controle de acesso por perfil (RBAC) e painel de indicadores operacionais.
+  Sistema <strong>Fullstack</strong> de gestão de inventário e inteligência de negócio — com PDV reativo, controle de acesso (RBAC) e ferramenta de precificação estratégica.
 </p>
 
 <p align="center">
@@ -16,7 +16,9 @@
 
 ---
 
-## 🔑 Acesso para Demonstração
+## 🔑 Acesso para Demonstração (Quick Start)
+
+O sistema possui controle de acesso restrito por perfil (RBAC). Para explorar as ferramentas de gestão e precificação, utilize o acesso de **Administrador**:
 
 | Perfil | E-mail | Senha |
 | :--- | :--- | :--- |
@@ -24,134 +26,48 @@
 
 ---
 
-## 💡 Sobre o projeto
+## 💡 Sobre o Projeto
 
-O **Estoque Fácil** é um MVP voltado para a digitalização de processos em pequenos comércios. O foco foi construir uma integração Fullstack real e consistente — cobrindo modelagem de banco de dados, API REST, autenticação, controle de acesso e deploy em produção.
-
-O projeto vai além do CRUD: implementa autenticação com JWT, controle de acesso por perfil (RBAC), validação rigorosa de dados no servidor e sincronização reativa entre componentes no frontend.
+O **Estoque Fácil** é uma solução ERP/PDV desenvolvida para digitalizar a operação de pequenos negócios. O diferencial do projeto é unir o controle de inventário à **inteligência financeira**, fornecendo ao lojista ferramentas de apoio à decisão para garantir a rentabilidade do negócio.
 
 ---
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades Estratégicas
 
-### 📊 Dashboard de Indicadores
-- Faturamento mensal calculado via agregações do Prisma
-- Monitoramento de patrimônio (custo) e receita potencial (valor de venda)
-- Alertas visuais para produtos abaixo do estoque mínimo configurado
-- Feed em tempo real das últimas 10 movimentações do sistema
+### 🧮 Inteligência em Precificação & Lucratividade
+- **Calculadora de Margem:** O sistema auxilia o lojista na definição de preços saudáveis ao calcular automaticamente a **Margem Bruta** e o **Lucro Estimado** de cada item com base nos custos reais de aquisição.
+- **Análise de Patrimônio:** Monitoramento do **Custo Total Investido**, permitindo visualizar exatamente quanto capital a empresa possui imobilizado em mercadorias.
+- **Receita Potencial:** Projeção dinâmica de faturamento total baseada no valor de venda do estoque atual.
+- **Alertas de Reposição:** Identificação visual de produtos com estoque crítico, prevenindo a ruptura de vendas.
 
-### 🛒 PDV (Ponto de Venda)
-- Carrinho dinâmico com validação de estoque disponível em tempo real
-- Seleção de forma de pagamento: Pix, Cartão ou Dinheiro
-- Baixa automática no estoque ao confirmar a venda
-- Dashboard e Histórico atualizam instantaneamente, sem recarregar a página
+### 🛒 PDV (Ponto de Venda) Sincronizado
+- **Interface Reativa:** Carrinho com validação de estoque em tempo real e registro de modalidade (Pix, Cartão ou Dinheiro).
+- **Sincronização via Eventos:** Uso de `CustomEvents` para que o Dashboard e o Histórico atualizem instantaneamente após a venda, sem necessidade de recarregar a página (F5).
+- **Baixa Automática:** Débito no inventário validado no servidor via transações atômicas para garantir a integridade dos dados.
 
-### 🔐 Autenticação e Controle de Acesso (RBAC)
-- Sessões protegidas com JWT
-- Perfis diferenciados: Admin (gestão total) e Usuário (operações básicas)
-- Painel de gestão de equipe exclusivo para administradores
-- Rotas protegidas por middleware de autorização no backend
+### 🔐 Segurança e Gestão de Equipe (RBAC)
+- **Níveis de Acesso:** Diferenciação entre **Admin** (gestão total, financeira e equipe) e **Usuário** (operações básicas).
+- **Gestão de Membros:** Interface exclusiva para administradores editarem ou removerem membros do sistema.
+- **Auditabilidade:** Registro detalhado de qual operador realizou cada movimentação, garantindo total rastreabilidade.
 
 ---
 
 ## 🛠️ Tecnologias
 
-**Backend**
+**Backend:** Node.js, Express, Prisma ORM, PostgreSQL (Supabase), JWT, Bcrypt, Zod, Render.
 
-| Tecnologia | Uso |
-| :--- | :--- |
-| Node.js + Express | Servidor e API REST |
-| Prisma ORM | Comunicação e migrations do banco |
-| PostgreSQL (Supabase) | Banco de dados em produção |
-| JWT + Bcrypt | Autenticação e hash de senhas |
-| Zod | Validação de schemas |
-| Render | Deploy da API |
-
-**Frontend**
-
-| Tecnologia | Uso |
-| :--- | :--- |
-| React.js + Vite | Interface reativa e build otimizado |
-| Tailwind CSS | Estilização utilitária |
-| Recharts | Gráficos do dashboard |
-| Lucide Icons | Ícones |
-| Vercel | Deploy do frontend |
+**Frontend:** React.js, Vite, Tailwind CSS, Recharts, Lucide Icons, Vercel.
 
 ---
 
 ## 🏗️ Arquitetura
-**Fluxo de dados:**
-`Usuário → React (Vercel) → API REST (Render) → Prisma ORM → PostgreSQL (Supabase)`
 
----
-
-## ⚙️ Como rodar localmente
-
-**Pré-requisitos:** Node.js v18+, npm, conta no Supabase (ou PostgreSQL local)
-
-**1. Clone o repositório**
-```bash
-git clone https://github.com/Aishabrito/estoque-facil-completo.git
-cd estoque-facil-completo
-```
-
-**2. Configure e rode o backend**
-```bash
-cd api
-npm install
-cp .env.example .env   # preencha as variáveis
-npx prisma migrate dev
-npm run dev
-# servidor disponível em http://localhost:3333
-```
-
-**3. Configure e rode o frontend**
-```bash
-cd ../web
-npm install
-cp .env.example .env   # informe a URL da API
-npm run dev
-# aplicação disponível em http://localhost:5173
-```
-
----
-
-## 🔑 Variáveis de Ambiente
-
-**api/.env**
-```env
-DATABASE_URL="postgresql://usuario:senha@host:5432/estoque_facil"
-JWT_SECRET="sua_chave_secreta_aqui"
-PORT=3333
-```
-
-**web/.env**
-```env
-VITE_API_URL="http://localhost:3333"
-```
-
-> ⚠️ Nunca suba arquivos `.env` para o repositório. Confirme que `.env` está no `.gitignore`.
-
----
-
-## 🧠 Decisões Técnicas
-
-**Sincronização entre componentes sem gerenciador de estado externo**
-Para que o Dashboard atualize após uma venda sem recarregar a página, utilizei `CustomEvents` nativos do JavaScript — uma solução leve para comunicação entre componentes irmãos, sem a necessidade de Redux ou Context API global.
-
-**Integridade de dados garantida no servidor**
-A validação de estoque negativo é feita no backend via Prisma antes de qualquer escrita no banco. Se qualquer etapa falha, a operação é revertida — garantindo consistência do inventário independente do cliente.
-
-**Deploy Fullstack em produção**
-Configurei CORS entre domínios diferentes, variáveis de ambiente no Render e Vercel, e banco PostgreSQL externo no Supabase — lidando com os desafios reais de um ambiente de produção.
-
-**Segurança com JWT e RBAC**
-Dois níveis de acesso (Admin/Usuário) com middleware de autorização no backend e proteção de rotas no frontend — garantindo que cada perfil acesse apenas o que deve.
-
----
-
-<p align="center">
-  Desenvolvido por <strong>Aísha Brito</strong>
-  <br><br>
-  Se esse projeto te ajudou ou te inspirou, deixa uma ⭐
-</p>
+```text
+estoque-facil-completo/
+├── api/                # Backend (Node.js + Prisma)
+│   ├── src/controllers # Regras de negócio (Vendas, Precificação, Dashboard)
+│   └── src/routes      # Endpoints da API com proteção RBAC
+└── web/                # Frontend (React + Vite)
+    ├── src/services    # Camada de integração com API (Axios)
+    ├── src/hooks       # Lógica de sincronização e estados reativos
+    └── src/pages       # Dashboard, PDV e Gestão de Equipe
