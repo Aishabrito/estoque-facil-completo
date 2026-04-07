@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Adicionei useCallback
 import Sidebar from '../components/Sidebar';
 import { ShoppingCart, Loader2, Receipt, Calendar, CreditCard, User, Box } from 'lucide-react';
 import api from '../services/api';
@@ -7,19 +7,31 @@ export default function Vendas() {
   const [vendas, setVendas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function carregarVendas() {
-      try {
-        const response = await api.get('/vendas');
-        setVendas(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar vendas:", error);
-      } finally {
-        setLoading(false);
-      }
+  // Transformei em useCallback para podermos usar no useEffect de forma limpa
+  const carregarVendas = useCallback(async () => {
+    try {
+      // O loading só aparece na primeira vez para não ficar piscando a tela depois
+      const response = await api.get('/vendas');
+      setVendas(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar vendas:", error);
+    } finally {
+      setLoading(false);
     }
-    carregarVendas();
   }, []);
+
+  useEffect(() => {
+    // Carrega ao montar a tela
+    carregarVendas();
+
+    // ⚡ O PULO DO GATO: Ouvinte de novas vendas
+    window.addEventListener('movimentacao-registrada', carregarVendas);
+    
+    // Limpa o ouvinte quando sair da tela
+    return () => {
+      window.removeEventListener('movimentacao-registrada', carregarVendas);
+    };
+  }, [carregarVendas]);
 
   const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const dataFmt = (dataIso) => new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });

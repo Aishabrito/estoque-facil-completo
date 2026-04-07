@@ -31,7 +31,9 @@ export default function AbaVenda({ onClose }) {
     }
   }, []);
 
-  useEffect(() => { carregarProdutos(); }, [carregarProdutos]);
+  useEffect(() => { 
+    carregarProdutos(); 
+  }, [carregarProdutos]);
 
   const produtosFiltrados = produtos.filter(p =>
     p.estoque > 0 &&
@@ -88,9 +90,22 @@ export default function AbaVenda({ onClose }) {
         })),
         formaPagamento,
       });
+
+      // ✅ MÁGICA: Avisa o Dashboard e o Histórico para se atualizarem
+      window.dispatchEvent(new CustomEvent('movimentacao-registrada'));
+      
+      // ✅ Atualiza a lista de produtos (estoque) localmente
+      carregarProdutos();
+
       setSucesso(true);
-      window.dispatchEvent(new Event('movimentacao-registrada'));
-      setTimeout(() => onClose(), 2000);
+
+      // Fecha e reseta após 2 segundos
+      setTimeout(() => {
+        onClose();
+        setSucesso(false);
+        setCarrinho([]);
+      }, 2000);
+
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao finalizar venda.');
     } finally {
@@ -101,24 +116,25 @@ export default function AbaVenda({ onClose }) {
   if (sucesso) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12 text-emerald-600 h-full">
-        <CheckCircle size={56} strokeWidth={1.5} />
+        <div className="bg-emerald-50 p-6 rounded-full">
+          <CheckCircle size={56} strokeWidth={1.5} />
+        </div>
         <p className="text-xl font-bold text-gray-800">Venda finalizada!</p>
-        <p className="text-sm text-gray-400">Estoque atualizado automaticamente.</p>
+        <p className="text-sm text-gray-400 text-center">O estoque e os indicadores foram atualizados.</p>
       </div>
     );
   }
 
   return (
     <div className="flex h-full overflow-hidden">
-
       {/* Esquerda — lista de produtos */}
       <div className="w-1/2 border-r border-gray-100 flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-gray-100 shrink-0">
+        <div className="p-4 border-b border-gray-100 shrink-0 bg-white">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
-              placeholder="Buscar produto..."
+              placeholder="Buscar produto disponível..."
               autoFocus
               className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50/50"
               value={busca}
@@ -127,19 +143,19 @@ export default function AbaVenda({ onClose }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50 bg-white">
           {produtosFiltrados.length > 0 ? (
             produtosFiltrados.map(produto => (
               <button
                 key={produto.id}
                 type="button"
                 onClick={() => adicionarAoCarrinho(produto)}
-                className="w-full flex items-center justify-between p-4 hover:bg-emerald-50/40 transition-colors text-left"
+                className="w-full flex items-center justify-between p-4 hover:bg-emerald-50/40 transition-colors text-left group"
               >
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">{produto.nome}</p>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold mt-0.5">
-                    {produto.categoria} • {produto.estoque} em estoque
+                  <p className="font-semibold text-gray-800 text-sm group-hover:text-emerald-700 transition-colors">{produto.nome}</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold mt-0.5 tracking-wider">
+                    {produto.categoria} • <span className={produto.estoque <= 5 ? 'text-orange-500' : ''}>{produto.estoque} em estoque</span>
                   </p>
                 </div>
                 <div className="text-right shrink-0 ml-3">
@@ -151,26 +167,26 @@ export default function AbaVenda({ onClose }) {
               </button>
             ))
           ) : (
-            <div className="p-8 text-center text-gray-400 text-sm italic">
-              {busca ? 'Nenhum produto encontrado.' : 'Nenhum produto disponível.'}
+            <div className="p-12 text-center text-gray-400 text-sm italic">
+              {busca ? 'Nenhum produto encontrado.' : 'Nenhum produto com estoque.'}
             </div>
           )}
         </div>
       </div>
 
       {/* Direita — carrinho */}
-      <div className="w-1/2 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
+      <div className="w-1/2 flex flex-col overflow-hidden bg-gray-50/30">
+        <div className="flex-1 overflow-y-auto p-2">
           {carrinho.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-gray-300 p-8">
               <ShoppingCart size={40} strokeWidth={1} />
               <p className="text-sm italic text-gray-400">Carrinho vazio</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="space-y-2">
               {carrinho.map(item => (
-                <div key={item.produtoId} className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                <div key={item.produtoId} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <p className="font-semibold text-gray-800 text-sm leading-tight">{item.nome}</p>
                     <button
                       onClick={() => removerDoCarrinho(item.produtoId)}
@@ -197,7 +213,7 @@ export default function AbaVenda({ onClose }) {
                       >
                         <Plus size={12} />
                       </button>
-                      <span className="text-[10px] text-gray-400">× {fmt(item.precoNoMomento)}</span>
+                      <span className="text-[10px] text-gray-400 font-bold ml-1">× {fmt(item.precoNoMomento)}</span>
                     </div>
                     <span className="font-black text-gray-900 text-sm">{fmt(subtotal(item))}</span>
                   </div>
@@ -208,14 +224,14 @@ export default function AbaVenda({ onClose }) {
         </div>
 
         {/* Rodapé fixo */}
-        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0">
-          <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0 bg-white">
+          <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 border border-gray-100">
             <div className="flex justify-between text-xs text-gray-500">
-              <span>Itens</span>
-              <span className="font-bold">{totalItens} un. ({carrinho.length} produto{carrinho.length > 1 ? 's' : ''})</span>
+              <span>Resumo</span>
+              <span className="font-bold">{totalItens} un.</span>
             </div>
-            <div className="flex justify-between text-base font-black text-gray-900 pt-1 border-t border-gray-200">
-              <span>Total</span>
+            <div className="flex justify-between text-base font-black text-gray-900 pt-1.5 border-t border-gray-200">
+              <span>Total Geral</span>
               <span className="text-emerald-600">{fmt(totalGeral)}</span>
             </div>
           </div>
@@ -228,10 +244,10 @@ export default function AbaVenda({ onClose }) {
                   key={value}
                   type="button"
                   onClick={() => setFormaPagamento(value)}
-                  className={`flex flex-col items-center gap-1.5 py-2.5 rounded-xl border text-xs font-bold transition-all
+                  className={`flex flex-col items-center gap-1.5 py-2.5 rounded-xl border text-[11px] font-black uppercase transition-all
                     ${formaPagamento === value
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-100'
+                      : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50'
                     }`}
                 >
                   <Icon size={16} />
@@ -242,7 +258,7 @@ export default function AbaVenda({ onClose }) {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 px-3 py-2 rounded-xl text-xs font-semibold">
+            <div className="bg-red-50 border border-red-100 text-red-600 px-3 py-2 rounded-xl text-xs font-semibold animate-pulse">
               {error}
             </div>
           )}
@@ -250,7 +266,7 @@ export default function AbaVenda({ onClose }) {
           <button
             onClick={finalizarVenda}
             disabled={loading || carrinho.length === 0}
-            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading
               ? <Loader2 className="animate-spin" size={20} />
