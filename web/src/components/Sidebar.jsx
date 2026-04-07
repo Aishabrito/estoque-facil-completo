@@ -9,7 +9,8 @@ import {
   Menu, 
   X, 
   ShieldCheck,
-  Users // Importei o ícone de usuários
+  Users,
+  Receipt // Ícone novo para vendas
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -63,7 +64,7 @@ export default function Sidebar() {
             className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all active:scale-95"
           >
             <PlusCircle size={20} />
-            Movimentar
+            Movimentar / Vender
           </button>
         </div>
 
@@ -72,6 +73,9 @@ export default function Sidebar() {
           <NavItem icon={<Package size={20} />} text="Produtos" path="/produtos" active={location.pathname === '/produtos'} />
           <NavItem icon={<ArrowUpCircle size={20} />} text="Entradas" path="/entradas" active={location.pathname === '/entradas'} />
           <NavItem icon={<ArrowDownCircle size={20} />} text="Saídas" path="/saidas" active={location.pathname === '/saidas'} />
+          
+          {/* 🧾 NOVO MENU DE VENDAS */}
+          <NavItem icon={<Receipt size={20} />} text="Histórico de Vendas" path="/vendas" active={location.pathname === '/vendas'} />
           
           {/* 👑 MENU EXCLUSIVO PARA ADMINS */}
           {usuario?.isAdmin && (
