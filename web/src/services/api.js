@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3002',
+  // ✅ Se estiver na Vercel, ele usa a URL do Render. 
+  // 🏠 Se estiver no seu VS Code, ele usa o localhost.
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002',
 });
 
 // Injeta o token JWT em TODA requisição automaticamente
