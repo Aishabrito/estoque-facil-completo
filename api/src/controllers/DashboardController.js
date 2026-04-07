@@ -4,27 +4,28 @@ const prisma = new PrismaClient();
 export default {
   async resumo(req, res) {
     try {
+      // 1. Busca todos os produtos para cálculos patrimoniais
       const produtos = await prisma.produto.findMany();
 
-      // --- CÁLCULO DE VENDAS DO MÊS ---
+      // 2. Cálculo de Vendas do Mês Atual
       const agora = new Date();
-      // Cria uma data no dia 01 do mês atual às 00:00:00
       const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
 
       const vendasMes = await prisma.venda.aggregate({
         _sum: {
-          total: true // ⚠️ Verifique se no seu Schema o campo se chama 'total' ou 'valorTotal'
+          total: true 
         },
         where: {
-          data: { // ⚠️ Verifique se no seu Schema o campo de data se chama 'data' ou 'criadoEm'
+          data: {
             gte: inicioMes
           }
         }
       });
 
-      const totalVendasMes = Number(vendasMes._sum.total) || 0;
-      // -------------------------------
+      // Garantindo que o valor seja um número válido para o Front-end
+      const totalVendasMes = Number(vendasMes._sum?.total || 0);
 
+      // 3. Cálculos de Patrimônio e Receita
       const valorPatrimonial = produtos.reduce((total, p) => {
         const custo = Number(String(p.precoCusto || 0).replace(',', '.')) || 0;
         const estoque = Number(p.estoque) || 0;
@@ -41,15 +42,18 @@ export default {
         return total + (Number(p.estoque) || 0);
       }, 0);
 
+      // 4. Categorias Únicas
       const categorias = new Set(produtos.map(p => p.categoria).filter(Boolean));
       const totalCategorias = categorias.size;
 
+      // 5. Alertas de Baixo Estoque
       const baixoEstoque = produtos.filter(p => {
         const estoqueAtual = Number(p.estoque) || 0;
         const limiteAlerta = Number(p.estoqueMinimo) || 5;
         return estoqueAtual <= limiteAlerta;
       }).length;
 
+      // 6. Últimas Movimentações (Feed)
       const movimentacoes = await prisma.movimentacao.findMany({
         take: 10,
         orderBy: { data: 'desc' },
@@ -63,6 +67,7 @@ export default {
 
       const lucroEstimado = receitaPotencial - valorPatrimonial;
 
+      // Retorno para o Front-end
       return res.json({
         totalItens,
         totalCategorias,
@@ -70,7 +75,7 @@ export default {
         receitaPotencial,
         lucroEstimado,
         baixoEstoque,
-        totalVendasMes, // <-- ENVIANDO PARA O FRONT-END
+        totalVendasMes, 
         movimentacoes
       });
 

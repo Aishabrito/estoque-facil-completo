@@ -12,6 +12,7 @@ const registroSchema = z.object({
 });
 
 export default {
+  // BUSCAR DADOS DO USUÁRIO LOGADO
   async me(req, res) {
     try {
       const usuario = await prisma.usuario.findUnique({
@@ -25,6 +26,7 @@ export default {
     }
   },
 
+  // ATUALIZAR PRÓPRIO PERFIL
   async atualizarPerfil(req, res) {
     try {
       const { nome, email, senhaAtual, novaSenha } = req.body;
@@ -52,6 +54,7 @@ export default {
     }
   },
 
+  // REGISTRAR NOVO USUÁRIO (Lógica de primeiro ser Admin mantida)
   async registrar(req, res) {
     try {
       const { nome, email, senha } = registroSchema.parse(req.body);
@@ -87,6 +90,7 @@ export default {
     }
   },
 
+  // LOGIN
   async login(req, res) {
     const { email, senha } = req.body;
 
@@ -118,6 +122,7 @@ export default {
     }
   },
 
+  // LISTAR EQUIPE
   async listarUsuarios(req, res) {
     try {
       const usuarios = await prisma.usuario.findMany({
@@ -127,6 +132,42 @@ export default {
       return res.json(usuarios);
     } catch (error) {
       return res.status(500).json({ error: 'Erro ao listar equipe.' });
+    }
+  },
+
+  // --- NOVAS FUNÇÕES ADICIONADAS ABAIXO ---
+
+  // EDITAR MEMBRO DA EQUIPE (Apenas Admin via rota protegida)
+  async atualizarUsuario(req, res) {
+    const { id } = req.params;
+    const { nome, email, isAdmin } = req.body;
+
+    try {
+      const atualizado = await prisma.usuario.update({
+        where: { id },
+        data: { nome, email, isAdmin },
+        select: { id: true, nome: true, email: true, isAdmin: true }
+      });
+      return res.json(atualizado);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao atualizar membro da equipe.' });
+    }
+  },
+
+  // EXCLUIR MEMBRO DA EQUIPE (Apenas Admin via rota protegida)
+  async excluirUsuario(req, res) {
+    const { id } = req.params;
+
+    // Impede que você se delete do sistema logada como admin
+    if (id === req.usuarioId) {
+      return res.status(400).json({ error: 'Você não pode excluir sua própria conta de administrador.' });
+    }
+
+    try {
+      await prisma.usuario.delete({ where: { id } });
+      return res.json({ message: 'Membro da equipe removido com sucesso.' });
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao excluir usuário.' });
     }
   }
 };
