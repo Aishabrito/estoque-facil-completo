@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   TrendingUp, TrendingDown, AlertTriangle, Package,
-  DollarSign, Activity, Loader2, ShoppingBag, TrendingUp as Lucro
+  DollarSign, Activity, Loader2, ShoppingBag
 } from 'lucide-react';
 import api from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer
 } from 'recharts';
 
 export default function Dashboard() {
@@ -24,30 +24,36 @@ export default function Dashboard() {
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        setLoading(true);
-        const response = await api.get('/dashboard');
-        if (response.data) {
-          setData({
-            totalItens:        response.data.totalItens        ?? 0,
-            totalCategorias:   response.data.totalCategorias   ?? 0,
-            valorPatrimonial:  response.data.valorPatrimonial  ?? 0,
-            receitaPotencial:  response.data.receitaPotencial  ?? 0,
-            lucroEstimado:     response.data.lucroEstimado     ?? 0,
-            baixoEstoque:      response.data.baixoEstoque      ?? 0,
-            movimentacoes:     response.data.movimentacoes     || [],
-          });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
-      } finally {
-        setLoading(false);
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/dashboard');
+      if (response.data) {
+        setData({
+          totalItens:        response.data.totalItens        ?? 0,
+          totalCategorias:   response.data.totalCategorias   ?? 0,
+          valorPatrimonial:  response.data.valorPatrimonial  ?? 0,
+          receitaPotencial:  response.data.receitaPotencial  ?? 0,
+          lucroEstimado:     response.data.lucroEstimado     ?? 0,
+          baixoEstoque:      response.data.baixoEstoque      ?? 0,
+          movimentacoes:     response.data.movimentacoes     || [],
+        });
       }
+    } catch (error) {
+      console.error('Erro ao carregar dashboard:', error);
+    } finally {
+      setLoading(false);
     }
-    fetchDashboard();
   }, []);
+
+  // OUVINTE ADICIONADO AQUI 👇
+  useEffect(() => {
+    fetchDashboard();
+    window.addEventListener('movimentacao-registrada', fetchDashboard);
+    return () => {
+      window.removeEventListener('movimentacao-registrada', fetchDashboard);
+    };
+  }, [fetchDashboard]);
 
   const chartData = useMemo(() => {
     const agrupado = {};

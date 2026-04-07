@@ -62,29 +62,25 @@ model Configuracoes {
   @@map("configuracoes")
 }
 model Venda {
-  id             Int        @id @default(autoincrement())
-  total          Decimal    @db.Decimal(10, 2)
-  formaPagamento String     @default("dinheiro")
-  data           DateTime   @default(now())
-
-  usuarioId      Int
-  usuario        Usuario    @relation(fields: [usuarioId], references: [id])
-
-  itens          ItemVenda[]
+  id              Int          @id @default(autoincrement())
+  total           Decimal      @db.Decimal(10, 2)
+  formaPagamento  String
+  data            DateTime     @default(now())
+  usuarioId       Int
+  usuario         Usuario      @relation(fields: [usuarioId], references: [id])
+  itens           ItemVenda[]
 
   @@map("vendas")
 }
 
 model ItemVenda {
   id              Int      @id @default(autoincrement())
-  quantidade      Int
-  precoNoMomento  Decimal  @db.Decimal(10, 2)
-
   vendaId         Int
   venda           Venda    @relation(fields: [vendaId], references: [id])
-
   produtoId       Int
   produto         Produto  @relation(fields: [produtoId], references: [id])
+  quantidade      Int
+  precoNoMomento  Decimal  @db.Decimal(10, 2)
 
   @@map("itens_venda")
 }

@@ -71,8 +71,13 @@ export default function Produtos() {
     }
   }, []);
 
+  // OUVINTE ADICIONADO AQUI 👇
   useEffect(() => {
     fetchProducts();
+    window.addEventListener('movimentacao-registrada', fetchProducts);
+    return () => {
+      window.removeEventListener('movimentacao-registrada', fetchProducts);
+    };
   }, [fetchProducts]);
 
   const handleSaveProduct = async (dadosDoFormulario) => {
