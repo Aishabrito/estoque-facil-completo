@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
-import { ArrowDownCircle, Calendar, PackageOpen, Loader2, Search, TrendingDown, Download } from 'lucide-react';
+import {
+  ArrowDownCircle, Calendar, PackageOpen,
+  Loader2, Search, TrendingDown, Download, ShoppingCart
+} from 'lucide-react';
 import api from '../services/api';
 
 function exportarCSV(dados, nomeArquivo) {
-  const cabecalho = ['Produto', 'Quantidade', 'Motivo', 'Realizado por', 'Cargo', 'Data'];
+  const cabecalho = ['Produto', 'Quantidade', 'Motivo', 'Tipo', 'Realizado por', 'Cargo', 'Data'];
   const linhas = dados.map(item => [
     item.produto?.nome || 'Produto Excluído',
     item.qtd,
     item.motivo || '-',
+    item.motivo?.startsWith('Venda #') ? 'Venda PDV' : 'Saída Avulsa',
     item.usuario?.nome || 'Desconhecido',
     item.usuario?.isAdmin ? 'Administrador' : 'Operador',
     new Date(item.data).toLocaleDateString('pt-BR'),
@@ -31,6 +35,7 @@ export default function Saidas() {
   const [saidas, setSaidas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('todos'); // 'todos' | 'venda' | 'avulsa'
 
   useEffect(() => {
     async function carregar() {
@@ -44,15 +49,30 @@ export default function Saidas() {
       }
     }
     carregar();
+
+    window.addEventListener('movimentacao-registrada', carregar);
+    return () => window.removeEventListener('movimentacao-registrada', carregar);
   }, []);
 
-  const totalItens = saidas.reduce((acc, item) => acc + item.qtd, 0);
+  const isVenda = (item) => item.motivo?.startsWith('Venda #');
 
-  const filtradas = saidas.filter(item =>
-    item.produto?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.motivo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.usuario?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const totalItens = saidas.reduce((acc, item) => acc + item.qtd, 0);
+  const totalVendas = saidas.filter(isVenda).length;
+  const totalAvulsas = saidas.filter(i => !isVenda(i)).length;
+
+  const filtradas = saidas.filter(item => {
+    const matchBusca =
+      item.produto?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.motivo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.usuario?.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchTipo =
+      filtroTipo === 'todos' ? true :
+      filtroTipo === 'venda' ? isVenda(item) :
+      !isVenda(item);
+
+    return matchBusca && matchTipo;
+  });
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
@@ -64,7 +84,7 @@ export default function Saidas() {
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <ArrowDownCircle className="text-red-600" /> Histórico de Saídas
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Todas as saídas registradas no estoque</p>
+            <p className="text-sm text-gray-500 mt-1">Saídas avulsas e vendas PDV</p>
           </div>
           <button
             onClick={() => exportarCSV(filtradas, 'saidas.csv')}
@@ -75,11 +95,11 @@ export default function Saidas() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
             <div className="p-3 bg-red-50 rounded-xl"><TrendingDown size={22} className="text-red-600" /></div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total de Registros</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Registros</p>
               <p className="text-2xl font-black text-gray-900">{saidas.length}</p>
             </div>
           </div>
@@ -91,18 +111,23 @@ export default function Saidas() {
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+            <div className="p-3 bg-emerald-50 rounded-xl"><ShoppingCart size={22} className="text-emerald-600" /></div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Vendas PDV</p>
+              <p className="text-2xl font-black text-gray-900">{totalVendas}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
             <div className="p-3 bg-purple-50 rounded-xl"><Calendar size={22} className="text-purple-600" /></div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Última Saída</p>
-              <p className="text-lg font-black text-gray-900">
-                {saidas[0] ? new Date(saidas[0].data).toLocaleDateString('pt-BR') : '-'}
-              </p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Saídas Avulsas</p>
+              <p className="text-2xl font-black text-gray-900">{totalAvulsas}</p>
             </div>
           </div>
         </div>
 
-        {/* Busca */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4">
+        {/* Filtros + Busca */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4 flex flex-col md:flex-row gap-3 items-center">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -110,27 +135,48 @@ export default function Saidas() {
               placeholder="Buscar por produto, motivo ou operador..."
               className="w-full pl-10 pr-4 py-2.5 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50/50 text-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          <div className="flex gap-2 shrink-0">
+            {[
+              { value: 'todos',   label: 'Todos' },
+              { value: 'venda',   label: 'Vendas PDV' },
+              { value: 'avulsa',  label: 'Saídas Avulsas' },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setFiltroTipo(value)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border
+                  ${filtroTipo === value
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Tabela */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[700px]">
+            <table className="w-full text-left min-w-[750px]">
               <thead className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase text-gray-400 font-black tracking-widest">
                 <tr>
                   <th className="p-5">Produto</th>
                   <th className="p-5">Quantidade</th>
-                  <th className="p-5">Motivo</th>
+                  <th className="p-5">Tipo</th>
+                  <th className="p-5">Motivo / Venda</th>
                   <th className="p-5">Realizado por</th>
                   <th className="p-5">Data</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan="5" className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-red-500" size={28} /></td></tr>
+                  <tr><td colSpan="6" className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-red-500" size={28} /></td></tr>
                 ) : filtradas.length > 0 ? (
                   filtradas.map((item) => (
                     <tr key={item.id} className="hover:bg-red-50/20 transition-colors">
@@ -142,7 +188,20 @@ export default function Saidas() {
                           -{item.qtd} un.
                         </span>
                       </td>
-                      <td className="p-5 text-gray-500 text-sm">{item.motivo || <span className="italic text-gray-300">—</span>}</td>
+                      <td className="p-5">
+                        {isVenda(item) ? (
+                          <span className="inline-flex items-center gap-1.5 text-emerald-700 font-black bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full text-[10px] uppercase tracking-wide">
+                            <ShoppingCart size={11} /> PDV
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-gray-600 font-black bg-gray-100 border border-gray-200 px-3 py-1 rounded-full text-[10px] uppercase tracking-wide">
+                            <ArrowDownCircle size={11} /> Avulsa
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-5 text-gray-500 text-sm">
+                        {item.motivo || <span className="italic text-gray-300">—</span>}
+                      </td>
                       <td className="p-5">
                         {item.usuario ? (
                           <div className="flex items-center gap-2">
@@ -170,7 +229,7 @@ export default function Saidas() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="p-16 text-center text-gray-400">
+                    <td colSpan="6" className="p-16 text-center text-gray-400">
                       <div className="flex flex-col items-center gap-3">
                         <PackageOpen size={40} strokeWidth={1.5} />
                         <p className="font-medium italic text-sm">Nenhuma saída encontrada.</p>

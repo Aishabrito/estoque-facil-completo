@@ -1,5 +1,7 @@
-import { X, Save, Package, Tag, DollarSign, Layers, Loader2, ShoppingCart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, Save, Package, Tag, DollarSign, Layers, Loader2, ShoppingCart, TrendingUp, Info } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { calcularPrecoSugerido, calcularLucroLiquido, classificarMargem } from '../../utils/precificacao';
+import api from '../../services/api';
 
 export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdit }) {
   const [name, setName] = useState('');
@@ -11,6 +13,33 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Calculadora
+  const [margemLucro, setMargemLucro] = useState(30);
+  const [impostos, setImpostos] = useState(15);
+  const [custoOperacional, setCustoOperacional] = useState(10);
+  const [configLoading, setConfigLoading] = useState(false);
+  const [mostrarCalc, setMostrarCalc] = useState(false);
+
+  const precoSugerido = calcularPrecoSugerido({ precoCusto, margemLucro, impostos, custoOperacional });
+  const lucroLiquido = calcularLucroLiquido({ precoCusto, precoVenda: preco || precoSugerido, impostos, custoOperacional });
+  const statusMargem = classificarMargem(margemLucro);
+  const totalPercentual = Number(margemLucro) + Number(impostos) + Number(custoOperacional);
+  const inviavel = totalPercentual >= 100;
+
+  const carregarConfig = useCallback(async () => {
+    try {
+      setConfigLoading(true);
+      const res = await api.get('/configuracoes');
+      setMargemLucro(Number(res.data.margemLucro));
+      setImpostos(Number(res.data.impostos));
+      setCustoOperacional(Number(res.data.custoOperacional));
+    } catch {
+      // usa valores padrão se falhar
+    } finally {
+      setConfigLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setName(productToEdit?.nome || '');
@@ -20,10 +49,18 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
       setStock(productToEdit?.estoque || '');
       setEstoqueMinimo(productToEdit?.estoqueMinimo ?? '5');
       setError('');
+      setMostrarCalc(false);
+      carregarConfig();
     }
-  }, [productToEdit, isOpen]);
+  }, [productToEdit, isOpen, carregarConfig]);
 
   if (!isOpen) return null;
+
+  const aplicarPrecoSugerido = () => {
+    if (precoSugerido > 0) {
+      setPreco(precoSugerido.toFixed(2));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,11 +82,14 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
     }
   };
 
+  const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 max-h-[90vh] overflow-y-auto">
 
-        <div className="bg-gray-50/50 px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+        {/* Header */}
+        <div className="bg-gray-50/50 px-6 py-5 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
           <div>
             <h2 className="text-xl font-bold text-gray-800">
               {productToEdit ? 'Editar Item' : 'Novo Produto'}
@@ -98,7 +138,7 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
             </div>
           </div>
 
-          {/* Preço de Custo + Preço de Venda */}
+          {/* Preço de Custo + Venda */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">Preço de Custo</label>
@@ -122,7 +162,7 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
             </div>
           </div>
 
-          {/* Qtd Inicial + Estoque Mínimo */}
+          {/* Qtd + Estoque Mínimo */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">Qtd. Inicial</label>
@@ -134,9 +174,7 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
                   value={stock} onChange={e => setStock(e.target.value)}
                 />
               </div>
-              {productToEdit && (
-                <p className="text-[10px] text-gray-400 mt-1 ml-1 italic">Use Movimentar para alterar</p>
-              )}
+              {productToEdit && <p className="text-[10px] text-gray-400 mt-1 ml-1 italic">Use Movimentar para alterar</p>}
             </div>
             <div>
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">Alerta Mínimo</label>
@@ -150,6 +188,87 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
             </div>
           </div>
 
+          {/* Calculadora de Precificação */}
+          {precoCusto && Number(precoCusto) > 0 && (
+            <div className="border border-gray-100 rounded-2xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMostrarCalc(!mostrarCalc)}
+                className="w-full flex items-center justify-between p-4 bg-gray-50/80 hover:bg-gray-100/60 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp size={16} className="text-emerald-600" />
+                  <span className="text-sm font-bold text-gray-700">Calculadora de Precificação</span>
+                  {!configLoading && (
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${statusMargem.bg} ${statusMargem.color}`}>
+                      {statusMargem.label}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-400">{mostrarCalc ? '▲ fechar' : '▼ abrir'}</span>
+              </button>
+
+              {mostrarCalc && (
+                <div className="p-4 space-y-4">
+
+                  {/* Sliders */}
+                  <div className="space-y-3">
+                    <SliderInput
+                      label="Margem de Lucro"
+                      value={margemLucro}
+                      onChange={setMargemLucro}
+                      color="emerald"
+                    />
+                    <SliderInput
+                      label="Impostos"
+                      value={impostos}
+                      onChange={setImpostos}
+                      color="blue"
+                    />
+                    <SliderInput
+                      label="Custos Operacionais"
+                      value={custoOperacional}
+                      onChange={setCustoOperacional}
+                      color="purple"
+                    />
+                  </div>
+
+                  {inviavel ? (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600 font-semibold text-center">
+                      ⚠ Total de {totalPercentual}% — inviável. Reduza os percentuais.
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 font-semibold">Preço Sugerido</span>
+                        <span className="text-lg font-black text-gray-900">{fmt(precoSugerido)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 font-semibold">Lucro Líquido Estimado</span>
+                        <span className={`text-sm font-black ${lucroLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {fmt(lucroLiquido)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Info size={10} /> Fórmula: Custo ÷ (1 − {totalPercentual}%)
+                        </span>
+                        <span>Total: {totalPercentual}%</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={aplicarPrecoSugerido}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all active:scale-95"
+                      >
+                        Aplicar {fmt(precoSugerido)} como Preço de Venda
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <button type="submit" disabled={loading}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[11px] py-4 rounded-xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
           >
@@ -160,6 +279,29 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+function SliderInput({ label, value, onChange, color }) {
+  const colors = {
+    emerald: 'accent-emerald-600',
+    blue: 'accent-blue-600',
+    purple: 'accent-purple-600',
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</label>
+        <span className="text-sm font-black text-gray-700">{value}%</span>
+      </div>
+      <input
+        type="range" min="0" max="60" step="0.5"
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className={`w-full h-2 rounded-full cursor-pointer ${colors[color]}`}
+      />
     </div>
   );
 }
