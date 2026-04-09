@@ -6,9 +6,10 @@
 **ERP/PDV Fullstack para pequenos negócios — com inteligência de precificação, controle de acesso e PDV reativo.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://supabase.com/)
 [![Deploy](https://img.shields.io/badge/Deploy-Render_%2B_Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![CI](https://github.com/Aishabrito/estoque-facil-completo/actions/workflows/ci.yml/badge.svg)](https://github.com/Aishabrito/estoque-facil-completo/actions/workflows/ci.yml)
 
 [**🚀 Ver Demo ao Vivo**](https://estoque-facil-completo.vercel.app) · [GitHub](https://github.com/Aishabrito) · [LinkedIn](https://www.linkedin.com/in/aishabrito/)
 
@@ -80,9 +81,10 @@ estoque-facil-completo/
 └── web/                          # Frontend (React + Vite)
     ├── src/
     │   ├── pages/                # Dashboard, PDV, Gestão de Equipe
+    │   ├── components/           # Componentes reutilizáveis (Sidebar, modais)
+    │   ├── contexts/             # Estado global (StockContext)
     │   ├── services/             # Camada de integração com API (Axios)
-    │   ├── hooks/                # Lógica de sincronização e estados reativos
-    │   └── components/           # Componentes reutilizáveis
+    │   └── utils/                # Utilitários de precificação e cálculo
     └── index.html
 ```
 
@@ -96,8 +98,8 @@ estoque-facil-completo/
 
 ### 1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/estoque-facil.git
-cd estoque-facil
+git clone https://github.com/Aishabrito/estoque-facil-completo.git
+cd estoque-facil-completo
 ```
 
 ### 2. Configure o Backend

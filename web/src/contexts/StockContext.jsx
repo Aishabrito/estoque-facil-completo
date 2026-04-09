@@ -35,6 +35,17 @@ export function StockProvider({ children }) {
     return () => window.removeEventListener('movimentacao-registrada', refreshData);
   }, [refreshData]);
 
+  const clearAllData = useCallback(async () => {
+    if (!window.confirm('Tem certeza? Esta ação apagará todos os dados e é irreversível.')) return;
+    try {
+      await api.delete('/configuracoes/resetar');
+      await refreshData();
+    } catch (error) {
+      console.error('Erro ao resetar dados:', error);
+      alert('Não foi possível resetar. Verifique se o servidor está disponível.');
+    }
+  }, [refreshData]);
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
@@ -42,7 +53,7 @@ export function StockProvider({ children }) {
   };
 
   return (
-    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout }}>
+    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout, clearAllData }}>
       {children}
     </StockContext.Provider>
   );

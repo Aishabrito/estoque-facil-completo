@@ -3,26 +3,30 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const ADMIN_NOME = process.env.ADMIN_NOME || 'Administrador';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@estoquefacil.com';
+const ADMIN_SENHA = process.env.ADMIN_SENHA || 'admin123';
+
 async function main() {
-  const hashGerado = await bcrypt.hash('123456', 10);
-  const emailAdmin = 'aisha.paola14@gmail.com';
+  const hashGerado = await bcrypt.hash(ADMIN_SENHA, 10);
 
   const admin = await prisma.usuario.upsert({
-    where: { email: emailAdmin },
-    update: { 
-      senhaHash: hashGerado, // CORRIGIDO PARA senhaHash
+    where: { email: ADMIN_EMAIL },
+    update: {
+      senhaHash: hashGerado,
       isAdmin: true,
-      nome: 'Aisha Brito'
+      nome: ADMIN_NOME
     },
     create: {
-      nome: 'Aisha Brito',
-      email: emailAdmin,
-      senhaHash: hashGerado, // CORRIGIDO PARA senhaHash
+      nome: ADMIN_NOME,
+      email: ADMIN_EMAIL,
+      senhaHash: hashGerado,
       isAdmin: true
     }
   });
 
-  console.log(`✅ Sucesso! O usuário ${admin.email} agora é Admin com senhaHash válido.`);
+  console.log(`✅ Sucesso! O usuário ${admin.email} agora é Admin.`);
+  console.log('⚠️  Altere a senha padrão após o primeiro login.');
 }
 
 main()

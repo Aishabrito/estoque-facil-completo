@@ -13,8 +13,12 @@ export const verificarToken = (req, res, next) => {
   const [, token] = authHeader.split(' ');
 
   try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: 'Configuração do servidor incompleta. JWT_SECRET não definido.' });
+    }
     // Tenta decifrar o token usando a sua senha secreta do .env
-    const decodificado = jwt.verify(token, process.env.JWT_SECRET || 'segredo_padrao_para_desenvolvimento');
+    const decodificado = jwt.verify(token, secret);
     
     // Guarda os dados do usuário (id, isAdmin) dentro da requisição para as próximas funções usarem
     req.usuarioId = decodificado.id;
