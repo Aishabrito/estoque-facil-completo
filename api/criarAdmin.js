@@ -26,7 +26,7 @@ async function main() {
   });
 
   console.log(`✅ Sucesso! O usuário ${admin.email} agora é Admin.`);
-  console.log('⚠️  Altere a senha padrão após o primeiro login.');
+  console.log('⚠️  IMPORTANTE: Altere a senha padrão após o primeiro login!');
 }
 
 main()

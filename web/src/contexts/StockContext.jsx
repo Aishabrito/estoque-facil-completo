@@ -42,7 +42,8 @@ export function StockProvider({ children }) {
       await refreshData();
     } catch (error) {
       console.error('Erro ao resetar dados:', error);
-      alert('Não foi possível resetar. Verifique se o servidor está disponível.');
+      const msg = error?.response?.data?.error || 'Verifique se o servidor está disponível.';
+      alert(`Não foi possível resetar. ${msg}`);
     }
   }, [refreshData]);
 
