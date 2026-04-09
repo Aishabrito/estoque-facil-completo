@@ -111,6 +111,7 @@ npm install
 Crie um arquivo `.env` na pasta `api/`:
 ```env
 DATABASE_URL="postgresql://usuario:senha@host:5432/estoque_facil"
+DIRECT_URL="postgresql://usuario:senha@host:5432/estoque_facil"
 JWT_SECRET="seu_secret_aqui"
 PORT=3002
 ```
@@ -143,10 +144,44 @@ Acesse em `http://localhost:5173`
 
 | Serviço | Plataforma | Variáveis necessárias |
 |---------|------------|----------------------|
-| **API** | [Render](https://estoque-facil-completo.onrender.com) | `DATABASE_URL`, `JWT_SECRET`, `PORT` |
+| **API** | [Render](https://estoque-facil-completo.onrender.com) | `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `PORT` |
 | **Web** | [Vercel](https://estoque-facil-completo.vercel.app) | `VITE_API_URL` |
 
 > **Importante:** O Render realiza health check na rota `/`. O servidor está configurado para responder `200 OK` nesse endpoint, garantindo que o deploy fique com status *Live*.
+
+---
+
+## 📖 Documentação da API (Swagger)
+
+A documentação interativa de todos os endpoints está disponível via Swagger UI:
+
+- **Produção:** [`https://estoque-facil-completo.onrender.com/api-docs`](https://estoque-facil-completo.onrender.com/api-docs)
+- **Local:** `http://localhost:3002/api-docs`
+
+---
+
+## 🧪 Testes
+
+### Frontend
+
+```bash
+cd web
+npm test           # executa todos os testes (Vitest)
+npm run test:watch # modo watch durante o desenvolvimento
+```
+
+Os testes ficam em `web/src/__tests__/` e cobrem utilitários de precificação e cálculo de margem.
+
+---
+
+## ⚙️ CI/CD
+
+O pipeline de CI é executado automaticamente a cada push e Pull Request via **GitHub Actions** (`.github/workflows/ci.yml`):
+
+| Job | Etapas |
+|-----|--------|
+| Frontend | `npm ci` → `lint` → `test` → `build` |
+| Backend | `npm ci` → `prisma generate` |
 
 ---
 
@@ -166,7 +201,7 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 ---
 
 <div align="center">
-  Feito com ☕ e muito JavaScript por <a href="https://github.com/Aishabrito">Aísha Brito</a>
+  Feito com ☕ por <a href="https://github.com/Aishabrito">Aísha Brito</a>
   <br/><br/>
   <a href="https://github.com/Aishabrito">GitHub</a> · <a href="https://www.linkedin.com/in/aishabrito/">LinkedIn</a>
 </div>

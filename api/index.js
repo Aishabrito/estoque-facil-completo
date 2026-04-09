@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import rotas from './src/routes/index.js'; 
+import rotas from './src/routes/index.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './src/swagger.js';
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+// 📖 Documentação interativa da API
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(rotas);
 

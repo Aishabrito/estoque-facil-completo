@@ -60,7 +60,7 @@ export function StockProvider({ children }) {
   );
 }
 
-// Exportado separado para satisfazer o react-refresh/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);
-} 
+}

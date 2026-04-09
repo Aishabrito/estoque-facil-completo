@@ -42,5 +42,27 @@ export default {
     } catch (error) {
       return res.status(500).json({ error: 'Erro ao salvar configurações.' });
     }
+  },
+
+  async resetar(req, res) {
+    try {
+      // Apaga na ordem correta respeitando as foreign keys
+      await prisma.itemVenda.deleteMany({});
+      await prisma.venda.deleteMany({});
+      await prisma.movimentacao.deleteMany({});
+      await prisma.produto.deleteMany({});
+
+      // Restaura configurações para valores de fábrica
+      await prisma.configuracoes.upsert({
+        where: { id: 1 },
+        update: { margemLucro: 30, impostos: 15, custoOperacional: 10 },
+        create: { id: 1, margemLucro: 30, impostos: 15, custoOperacional: 10 },
+      });
+
+      return res.status(200).json({ message: 'Banco de dados resetado com sucesso.' });
+    } catch (error) {
+      console.error('Erro ao resetar banco:', error);
+      return res.status(500).json({ error: 'Erro ao resetar o banco de dados.' });
+    }
   }
 };

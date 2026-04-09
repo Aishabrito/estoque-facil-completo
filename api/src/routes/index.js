@@ -33,6 +33,7 @@ routes.get('/dashboard', DashboardController.resumo);
 // Configurações do Sistema
 routes.get('/configuracoes', ConfiguracoesController.buscar);
 routes.put('/configuracoes', verificarAdmin, ConfiguracoesController.atualizar);
+routes.delete('/configuracoes/resetar', verificarAdmin, ConfiguracoesController.resetar);
 
 // Produtos
 routes.get('/produtos', produtoController.listar);

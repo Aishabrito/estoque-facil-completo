@@ -1,16 +1,73 @@
-# React + Vite
+# Estoque Fácil — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface web do sistema ERP/PDV Estoque Fácil, construída com **React 19 + Vite + Tailwind CSS**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tecnologias
 
-## React Compiler
+| Pacote | Função |
+|--------|--------|
+| React 19 | Interface declarativa e reativa |
+| Vite 7 | Build tool e dev server |
+| Tailwind CSS 3 | Estilização utility-first |
+| Axios | Comunicação com a API |
+| React Router 7 | Navegação entre páginas |
+| Recharts | Gráficos do Dashboard |
+| Lucide React | Ícones |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Desenvolvimento local
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+cp .env.example .env    # configure VITE_API_URL
+npm install
+npm run dev             # http://localhost:5173
+```
+
+## Scripts disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Inicia o servidor de desenvolvimento |
+| `npm run build` | Gera o build de produção em `dist/` |
+| `npm run lint` | Verifica o código com ESLint |
+| `npm test` | Executa os testes com Vitest |
+| `npm run test:watch` | Executa os testes em modo watch |
+| `npm run preview` | Pré-visualiza o build de produção |
+
+---
+
+## Estrutura
+
+```
+src/
+├── pages/          # Dashboard, Produtos, Vendas, Configurações...
+├── components/     # Sidebar e modais reutilizáveis
+├── contexts/       # StockContext (estado global via Context API)
+├── services/       # api.js — cliente Axios com interceptors JWT
+├── utils/          # precificacao.js — cálculos de margem e markup
+└── __tests__/      # Testes unitários (Vitest)
+```
+
+---
+
+## Testes
+
+Os testes ficam em `src/__tests__/` e são executados com [Vitest](https://vitest.dev/).
+
+```bash
+npm test
+```
+
+---
+
+## Variáveis de ambiente
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `VITE_API_URL` | URL base da API backend | `http://localhost:3002` |
+
+Copie `.env.example` para `.env` e preencha conforme necessário.
+
