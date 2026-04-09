@@ -5,7 +5,12 @@ const prisma = new PrismaClient();
 
 const ADMIN_NOME = process.env.ADMIN_NOME || 'Administrador';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@estoquefacil.com';
-const ADMIN_SENHA = process.env.ADMIN_SENHA || 'admin123';
+const ADMIN_SENHA = process.env.ADMIN_SENHA;
+
+if (!ADMIN_SENHA) {
+  console.error('❌ ADMIN_SENHA não definida. Configure a variável de ambiente antes de executar.');
+  process.exit(1);
+}
 
 async function main() {
   const hashGerado = await bcrypt.hash(ADMIN_SENHA, 10);

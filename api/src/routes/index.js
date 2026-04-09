@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 
 import { ProdutoController } from '../controllers/ProdutoController.js'; 
 import AuthController from '../controllers/AuthController.js';
@@ -11,10 +12,18 @@ import VendaController from '../controllers/VendaController.js';
 const routes = Router();
 const produtoController = new ProdutoController(); 
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+});
+
 // ==========================================
 // 🔓 ROTAS PÚBLICAS
 // ==========================================
-routes.post('/login', AuthController.login);
+routes.post('/login', loginLimiter, AuthController.login);
 
 // ==========================================
 // 🛡️ BARREIRA DE SEGURANÇA GERAL (JWT)
