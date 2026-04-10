@@ -2,7 +2,13 @@ import { X, User, Mail, Lock, Loader2, UserPlus, CheckCircle } from 'lucide-reac
 import { useState } from 'react';
 import api from '../../services/api';
 
-export default function CriarUsuario({ isOpen, onClose, onSave }) {
+interface CriarUsuarioProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+export default function CriarUsuario({ isOpen, onClose, onSave }: CriarUsuarioProps) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -20,7 +26,7 @@ export default function CriarUsuario({ isOpen, onClose, onSave }) {
     onClose();
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -32,7 +38,8 @@ export default function CriarUsuario({ isOpen, onClose, onSave }) {
         handleClose();
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao cadastrar usuário.');
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || 'Erro ao cadastrar usuário.');
     } finally {
       setLoading(false);
     }

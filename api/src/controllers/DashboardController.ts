@@ -1,8 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import type { Request, Response } from 'express';
+
 const prisma = new PrismaClient();
 
 export default {
-  async resumo(req, res) {
+  async resumo(_req: Request, res: Response): Promise<Response> {
     try {
       // 1. Busca todos os produtos para cálculos patrimoniais
       const produtos = await prisma.produto.findMany();
@@ -13,7 +15,7 @@ export default {
 
       const vendasMes = await prisma.venda.aggregate({
         _sum: {
-          total: true 
+          total: true
         },
         where: {
           data: {
@@ -75,12 +77,12 @@ export default {
         receitaPotencial,
         lucroEstimado,
         baixoEstoque,
-        totalVendasMes, 
+        totalVendasMes,
         movimentacoes
       });
 
     } catch (error) {
-      console.error("ERRO NO DASHBOARD:", error.message);
+      console.error("ERRO NO DASHBOARD:", (error as Error).message);
       return res.status(500).json({ error: "Erro interno ao calcular indicadores." });
     }
   }

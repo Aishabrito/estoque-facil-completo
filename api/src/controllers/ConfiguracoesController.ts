@@ -1,8 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import type { Request, Response } from 'express';
+
 const prisma = new PrismaClient();
 
 export default {
-  async buscar(req, res) {
+  async buscar(_req: Request, res: Response): Promise<Response> {
     try {
       let config = await prisma.configuracoes.findUnique({ where: { id: 1 } });
 
@@ -14,14 +16,18 @@ export default {
       }
 
       return res.json(config);
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: 'Erro ao buscar configurações.' });
     }
   },
 
-  async atualizar(req, res) {
+  async atualizar(req: Request, res: Response): Promise<Response> {
     try {
-      const { margemLucro, impostos, custoOperacional } = req.body;
+      const { margemLucro, impostos, custoOperacional } = req.body as {
+        margemLucro: number | string;
+        impostos: number | string;
+        custoOperacional: number | string;
+      };
 
       const config = await prisma.configuracoes.upsert({
         where: { id: 1 },
@@ -39,7 +45,7 @@ export default {
       });
 
       return res.json(config);
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: 'Erro ao salvar configurações.' });
     }
   },

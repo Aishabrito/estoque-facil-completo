@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { ArrowUpCircle, Calendar, PackageOpen, Loader2, Search, TrendingUp, Download } from 'lucide-react';
 import api from '../services/api';
+import type { Movimentacao } from '../types';
 
-function exportarCSV(dados, nomeArquivo) {
+function exportarCSV(dados: Movimentacao[], nomeArquivo: string) {
   const cabecalho = ['Produto', 'Quantidade', 'Motivo', 'Realizado por', 'Cargo', 'Data'];
   const linhas = dados.map(item => [
     item.produto?.nome || 'Produto Excluído',
@@ -28,14 +29,14 @@ function exportarCSV(dados, nomeArquivo) {
 }
 
 export default function Entradas() {
-  const [entradas, setEntradas] = useState([]);
+  const [entradas, setEntradas] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function carregar() {
       try {
-        const response = await api.get('/movimentacoes');
+        const response = await api.get<Movimentacao[]>('/movimentacoes');
         setEntradas(response.data.filter(m => m.tipo?.toUpperCase() === 'ENTRADA'));
       } catch (err) {
         console.error("Erro ao carregar entradas:", err);
@@ -130,7 +131,7 @@ export default function Entradas() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan="5" className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-emerald-600" size={28} /></td></tr>
+                  <tr><td colSpan={5} className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-emerald-600" size={28} /></td></tr>
                 ) : filtradas.length > 0 ? (
                   filtradas.map((item) => (
                     <tr key={item.id} className="hover:bg-emerald-50/20 transition-colors">
@@ -170,7 +171,7 @@ export default function Entradas() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="p-16 text-center text-gray-400">
+                    <td colSpan={5} className="p-16 text-center text-gray-400">
                       <div className="flex flex-col items-center gap-3">
                         <PackageOpen size={40} strokeWidth={1.5} />
                         <p className="font-medium italic text-sm">Nenhuma entrada encontrada.</p>

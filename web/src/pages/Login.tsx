@@ -1,40 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Lock, Mail, AlertCircle } from 'lucide-react';
-import api from '../services/api'; // Importando sua configuração do Axios
+import api from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // 🚀 Chamada real para o seu Back-end (Porta 3002)
-      const response = await api.post('/login', { 
-        email, 
-        senha: password // O Back-end espera 'senha'
+      const response = await api.post<{ token: string; usuario: object }>('/login', {
+        email,
+        senha: password
       });
 
-      // ✅ Sucesso! Guardamos o Crachá (Token) e os dados do Usuário
       const { token, usuario } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('usuario', JSON.stringify(usuario));
 
-      // Redireciona para o Dashboard
       navigate('/dashboard');
-      
+
     } catch (err) {
-      // ❌ Tratamento de erro amigável
-      const mensagemErro = err.response?.data?.error || "Erro ao conectar com o servidor.";
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      const mensagemErro = axiosErr.response?.data?.error || "Erro ao conectar com o servidor.";
       setError(mensagemErro);
     } finally {
       setLoading(false);
@@ -44,7 +41,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl border border-gray-100">
-        
+
         {/* Cabeçalho */}
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg shadow-blue-200">
@@ -116,7 +113,7 @@ export default function Login() {
             )}
           </button>
         </form>
-        
+
         <p className="mt-8 text-center text-xs text-gray-400">
           &copy; 2026 Estoque Fácil. Desenvolvido por Aisha Brito.
         </p>

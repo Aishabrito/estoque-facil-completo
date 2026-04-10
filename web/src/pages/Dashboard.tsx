@@ -1,34 +1,70 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   TrendingUp, TrendingDown, AlertTriangle, Package,
-  DollarSign, Activity, Loader2, ShoppingBag, Calendar
-} from 'lucide-react'; // Adicionei Calendar para o ícone novo
+  DollarSign, Activity, Loader2, ShoppingBag, Calendar,
+} from 'lucide-react';
 import api from '../services/api';
+import type { DashboardData } from '../types';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer
 } from 'recharts';
 
+interface DashboardCardProps {
+  title: string;
+  value: string;
+  sub: string;
+  icon: ReactNode;
+  color: string;
+  bg: string;
+  alert?: boolean;
+}
+
+function DashboardCard({ title, value, sub, icon, color, bg, alert = false }: DashboardCardProps) {
+  return (
+    <div className={`bg-white p-5 rounded-2xl shadow-sm border overflow-hidden relative flex flex-col justify-between min-h-[120px]
+      ${alert ? 'border-orange-200' : 'border-gray-100'}`}>
+      <div className="relative z-10">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{title}</p>
+        <h3 className="text-xl font-black text-gray-900 leading-tight">{value}</h3>
+        {sub && (
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-2 inline-block uppercase
+            ${alert ? 'text-orange-600 bg-orange-50 border border-orange-100' : 'text-gray-400 bg-gray-50'}`}>
+            {sub}
+          </span>
+        )}
+      </div>
+      <div className={`absolute -right-3 -bottom-3 p-5 rounded-full opacity-15 ${bg}`}>
+        <span className={color}>{icon}</span>
+      </div>
+    </div>
+  );
+}
+
+interface UsuarioLocal {
+  nome?: string;
+}
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
+  const [data, setData] = useState<DashboardData>({
     totalItens: 0,
     totalCategorias: 0,
     valorPatrimonial: 0,
     receitaPotencial: 0,
     lucroEstimado: 0,
     baixoEstoque: 0,
-    totalVendasMes: 0, // <-- NOVO CAMPO ADICIONADO
+    totalVendasMes: 0,
     movimentacoes: [],
   });
 
-  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}') as UsuarioLocal;
 
   const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/dashboard');
+      const response = await api.get<DashboardData>('/dashboard');
       if (response.data) {
         setData({
           totalItens:        response.data.totalItens        ?? 0,
@@ -37,7 +73,7 @@ export default function Dashboard() {
           receitaPotencial:  response.data.receitaPotencial  ?? 0,
           lucroEstimado:     response.data.lucroEstimado     ?? 0,
           baixoEstoque:      response.data.baixoEstoque      ?? 0,
-          totalVendasMes:    response.data.totalVendasMes    ?? 0, // <-- CAPTURANDO DO BACK-END
+          totalVendasMes:    response.data.totalVendasMes    ?? 0,
           movimentacoes:     response.data.movimentacoes     || [],
         });
       }
@@ -57,7 +93,7 @@ export default function Dashboard() {
   }, [fetchDashboard]);
 
   const chartData = useMemo(() => {
-    const agrupado = {};
+    const agrupado: Record<string, { name: string; entradas: number; saidas: number }> = {};
     data.movimentacoes.forEach(mov => {
       const dia = new Date(mov.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       if (!agrupado[dia]) agrupado[dia] = { name: dia, entradas: 0, saidas: 0 };
@@ -67,9 +103,9 @@ export default function Dashboard() {
     return Object.values(agrupado).reverse();
   }, [data.movimentacoes]);
 
-  const isEntrada = (tipo) => tipo?.toUpperCase() === 'ENTRADA';
+  const isEntrada = (tipo: string) => tipo?.toUpperCase() === 'ENTRADA';
 
-  const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmt = (val: number | string) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
@@ -87,7 +123,7 @@ export default function Dashboard() {
           {loading && <Loader2 className="animate-spin text-emerald-600" size={20} />}
         </div>
 
-        {/* Cards - Agora com 5 colunas para acomodar o novo card em telas grandes */}
+        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <DashboardCard
             title="Vendas do Mês"
@@ -127,7 +163,6 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* O restante do código permanece exatamente como você enviou... */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
             <div className="p-3 bg-gray-100 rounded-xl">
@@ -198,27 +233,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function DashboardCard({ title, value, sub, icon, color, bg, alert }) {
-  return (
-    <div className={`bg-white p-5 rounded-2xl shadow-sm border overflow-hidden relative flex flex-col justify-between min-h-[120px]
-      ${alert ? 'border-orange-200' : 'border-gray-100'}`}>
-      <div className="relative z-10">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-        <h3 className="text-xl font-black text-gray-900 leading-tight">{value}</h3>
-        {sub && (
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-2 inline-block uppercase
-            ${alert ? 'text-orange-600 bg-orange-50 border border-orange-100' : 'text-gray-400 bg-gray-50'}`}>
-            {sub}
-          </span>
-        )}
-      </div>
-      <div className={`absolute -right-3 -bottom-3 p-5 rounded-full opacity-15 ${bg}`}>
-        <span className={color}>{icon}</span>
-      </div>
     </div>
   );
 }

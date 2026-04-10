@@ -2,8 +2,46 @@ import { X, Save, Package, Tag, DollarSign, Layers, Loader2, ShoppingCart, Trend
 import { useState, useEffect, useCallback } from 'react';
 import { calcularPrecoSugerido, calcularLucroLiquido, classificarMargem } from '../../utils/precificacao';
 import api from '../../services/api';
+import type { Produto, Config } from '../../types';
 
-export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdit }) {
+interface CriarNovoProdutoProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (dados: Omit<Produto, 'id'>) => Promise<void>;
+  productToEdit?: Produto | null;
+}
+
+interface SliderInputProps {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  color: 'emerald' | 'blue' | 'purple';
+}
+
+function SliderInput({ label, value, onChange, color }: SliderInputProps) {
+  const colors: Record<string, string> = {
+    emerald: 'accent-emerald-600',
+    blue: 'accent-blue-600',
+    purple: 'accent-purple-600',
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</label>
+        <span className="text-sm font-black text-gray-700">{value}%</span>
+      </div>
+      <input
+        type="range" min="0" max="60" step="0.5"
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className={`w-full h-2 rounded-full cursor-pointer ${colors[color]}`}
+      />
+    </div>
+  );
+}
+
+export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdit }: CriarNovoProdutoProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [precoCusto, setPrecoCusto] = useState('');
@@ -29,7 +67,7 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
   const carregarConfig = useCallback(async () => {
     try {
       setConfigLoading(true);
-      const res = await api.get('/configuracoes');
+      const res = await api.get<Config>('/configuracoes');
       setMargemLucro(Number(res.data.margemLucro));
       setImpostos(Number(res.data.impostos));
       setCustoOperacional(Number(res.data.custoOperacional));
@@ -44,10 +82,10 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
     if (isOpen) {
       setName(productToEdit?.nome || '');
       setCategory(productToEdit?.categoria || '');
-      setPrecoCusto(productToEdit?.precoCusto || '');
-      setPreco(productToEdit?.preco || '');
-      setStock(productToEdit?.estoque || '');
-      setEstoqueMinimo(productToEdit?.estoqueMinimo ?? '5');
+      setPrecoCusto(String(productToEdit?.precoCusto || ''));
+      setPreco(String(productToEdit?.preco || ''));
+      setStock(String(productToEdit?.estoque || ''));
+      setEstoqueMinimo(String(productToEdit?.estoqueMinimo ?? '5'));
       setError('');
       setMostrarCalc(false);
       carregarConfig();
@@ -62,7 +100,7 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -76,13 +114,14 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
         estoqueMinimo: Number(estoqueMinimo) || 5,
       });
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao salvar produto.');
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || 'Erro ao salvar produto.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmt = (val: number | string) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
@@ -210,27 +249,10 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
 
               {mostrarCalc && (
                 <div className="p-4 space-y-4">
-
-                  {/* Sliders */}
                   <div className="space-y-3">
-                    <SliderInput
-                      label="Margem de Lucro"
-                      value={margemLucro}
-                      onChange={setMargemLucro}
-                      color="emerald"
-                    />
-                    <SliderInput
-                      label="Impostos"
-                      value={impostos}
-                      onChange={setImpostos}
-                      color="blue"
-                    />
-                    <SliderInput
-                      label="Custos Operacionais"
-                      value={custoOperacional}
-                      onChange={setCustoOperacional}
-                      color="purple"
-                    />
+                    <SliderInput label="Margem de Lucro" value={margemLucro} onChange={setMargemLucro} color="emerald" />
+                    <SliderInput label="Impostos" value={impostos} onChange={setImpostos} color="blue" />
+                    <SliderInput label="Custos Operacionais" value={custoOperacional} onChange={setCustoOperacional} color="purple" />
                   </div>
 
                   {inviavel ? (
@@ -279,29 +301,6 @@ export default function CriarNovoProduto({ isOpen, onClose, onSave, productToEdi
           </button>
         </form>
       </div>
-    </div>
-  );
-}
-
-function SliderInput({ label, value, onChange, color }) {
-  const colors = {
-    emerald: 'accent-emerald-600',
-    blue: 'accent-blue-600',
-    purple: 'accent-purple-600',
-  };
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1">
-        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</label>
-        <span className="text-sm font-black text-gray-700">{value}%</span>
-      </div>
-      <input
-        type="range" min="0" max="60" step="0.5"
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className={`w-full h-2 rounded-full cursor-pointer ${colors[color]}`}
-      />
     </div>
   );
 }

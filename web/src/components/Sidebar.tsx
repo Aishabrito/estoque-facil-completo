@@ -1,20 +1,48 @@
-import { 
-  LayoutDashboard, 
-  Package, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  Settings, 
-  LogOut, 
-  PlusCircle, 
-  Menu, 
-  X, 
+import {
+  LayoutDashboard,
+  Package,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Settings,
+  LogOut,
+  PlusCircle,
+  Menu,
+  X,
   ShieldCheck,
   Users,
-  Receipt // Ícone novo para vendas
+  Receipt,
 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import RegistrarMovimentacao from './modals/RegistrarMovimentacao';
+
+interface UsuarioLocal {
+  nome: string;
+  isAdmin: boolean;
+}
+
+interface NavItemProps {
+  icon: ReactNode;
+  text: string;
+  path: string;
+  active: boolean;
+}
+
+function NavItem({ icon, text, path, active }: NavItemProps) {
+  return (
+    <Link
+      to={path}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+        active
+        ? 'bg-blue-50 text-blue-700'
+        : 'text-gray-600 hover:bg-gray-50'
+      }`}
+    >
+      {icon}
+      {text}
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -23,7 +51,7 @@ export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const usuarioJson = localStorage.getItem('usuario');
-  const usuario = usuarioJson ? JSON.parse(usuarioJson) : null;
+  const usuario: UsuarioLocal | null = usuarioJson ? JSON.parse(usuarioJson) as UsuarioLocal : null;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -33,7 +61,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <button 
+      <button
         onClick={() => setIsMobileOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md text-gray-700 border border-gray-100"
       >
@@ -47,10 +75,10 @@ export default function Sidebar() {
       <aside className={`
         fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50
         transition-transform duration-300 ease-in-out flex flex-col
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0
       `}>
-        
+
         <div className="p-6 border-b border-gray-100 flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <span className="text-xl font-bold text-blue-900">Estoque Fácil</span>
@@ -58,8 +86,8 @@ export default function Sidebar() {
               <X size={24} />
             </button>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => { setIsModalOpen(true); setIsMobileOpen(false); }}
             className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all active:scale-95"
           >
@@ -73,17 +101,17 @@ export default function Sidebar() {
           <NavItem icon={<Package size={20} />} text="Produtos" path="/produtos" active={location.pathname === '/produtos'} />
           <NavItem icon={<ArrowUpCircle size={20} />} text="Entradas" path="/entradas" active={location.pathname === '/entradas'} />
           <NavItem icon={<ArrowDownCircle size={20} />} text="Saídas" path="/saidas" active={location.pathname === '/saidas'} />
-          
-          {/* 🧾 NOVO MENU DE VENDAS */}
+
+          {/* 🧾 MENU DE VENDAS */}
           <NavItem icon={<Receipt size={20} />} text="Histórico de Vendas" path="/vendas" active={location.pathname === '/vendas'} />
-          
+
           {/* 👑 MENU EXCLUSIVO PARA ADMINS */}
           {usuario?.isAdmin && (
-            <NavItem 
-              icon={<Users size={20} />} 
-              text="Equipe" 
-              path="/usuarios" 
-              active={location.pathname === '/usuarios'} 
+            <NavItem
+              icon={<Users size={20} />}
+              text="Equipe"
+              path="/usuarios"
+              active={location.pathname === '/usuarios'}
             />
           )}
         </nav>
@@ -110,8 +138,8 @@ export default function Sidebar() {
               <Settings size={20} />
               Configurações
             </Link>
-            <button 
-              onClick={handleLogout} 
+            <button
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <LogOut size={20} />
@@ -123,21 +151,5 @@ export default function Sidebar() {
 
       <RegistrarMovimentacao isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
-  );
-}
-
-function NavItem({ icon, text, path, active }) {
-  return (
-    <Link 
-      to={path} 
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-        active 
-        ? 'bg-blue-50 text-blue-700' 
-        : 'text-gray-600 hover:bg-gray-50'
-      }`}
-    >
-      {icon}
-      {text}
-    </Link>
   );
 }

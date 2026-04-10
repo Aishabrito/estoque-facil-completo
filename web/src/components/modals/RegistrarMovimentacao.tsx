@@ -3,8 +3,13 @@ import { useState } from 'react';
 import AbaMovimentacao from './AbaMovimentacao';
 import AbaVenda from './AbaVenda';
 
-export default function RegistrarMovimentacao({ isOpen, onClose }) {
-  const [aba, setAba] = useState('movimentacao');
+interface RegistrarMovimentacaoProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function RegistrarMovimentacao({ isOpen, onClose }: RegistrarMovimentacaoProps) {
+  const [aba, setAba] = useState<'movimentacao' | 'venda'>('movimentacao');
 
   if (!isOpen) return null;
 

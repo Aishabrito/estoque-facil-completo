@@ -1,12 +1,12 @@
 {
   "name": "estoque-api",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js",
-    "build": "npx prisma generate"
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts",
+    "build": "tsc && npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -23,6 +23,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.5.2",
+    "nodemon": "^3.1.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
   }
 }

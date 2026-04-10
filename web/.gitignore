@@ -28,3 +28,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# TypeScript build artifacts
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js

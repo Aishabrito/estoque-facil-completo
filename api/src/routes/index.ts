@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
-import { ProdutoController } from '../controllers/ProdutoController.js'; 
+import { ProdutoController } from '../controllers/ProdutoController.js';
 import AuthController from '../controllers/AuthController.js';
 import MovimentacaoController from '../controllers/MovimentacaoController.js';
 import DashboardController from '../controllers/DashboardController.js';
@@ -10,7 +10,7 @@ import { verificarToken, verificarAdmin } from '../middlewares/authMiddleware.js
 import VendaController from '../controllers/VendaController.js';
 
 const routes = Router();
-const produtoController = new ProdutoController(); 
+const produtoController = new ProdutoController();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -33,7 +33,7 @@ routes.use(verificarToken);
 // ==========================================
 // 🔒 ROTAS PROTEGIDAS (Para toda a equipe)
 // ==========================================
-routes.get('/me', AuthController.me); 
+routes.get('/me', AuthController.me);
 routes.put('/me', AuthController.atualizarPerfil);
 
 // Dashboard (Indicadores e Faturamento Mensal)
@@ -45,10 +45,10 @@ routes.put('/configuracoes', verificarAdmin, ConfiguracoesController.atualizar);
 routes.delete('/configuracoes/resetar', verificarAdmin, ConfiguracoesController.resetar);
 
 // Produtos
-routes.get('/produtos', produtoController.listar);
-routes.post('/produtos', produtoController.criar);
-routes.put('/produtos/:id', produtoController.atualizar);
-routes.delete('/produtos/:id', produtoController.deletar);
+routes.get('/produtos', produtoController.listar.bind(produtoController));
+routes.post('/produtos', produtoController.criar.bind(produtoController));
+routes.put('/produtos/:id', produtoController.atualizar.bind(produtoController));
+routes.delete('/produtos/:id', produtoController.deletar.bind(produtoController));
 
 // Vendas
 routes.get('/vendas', VendaController.listar);
@@ -67,7 +67,7 @@ routes.get('/usuarios', verificarAdmin, AuthController.listarUsuarios);
 // Criar novo membro da equipe (Admin criando Vendedor, por exemplo)
 routes.post('/usuarios', verificarAdmin, AuthController.registrar);
 
-//Editar membro da equipe
+// Editar membro da equipe
 routes.put('/usuarios/:id', verificarAdmin, AuthController.atualizarUsuario);
 
 // Excluir membro da equipe

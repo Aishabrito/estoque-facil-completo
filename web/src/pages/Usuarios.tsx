@@ -4,20 +4,25 @@ import Sidebar from '../components/Sidebar';
 import CriarUsuario from '../components/modals/CriarUsuario';
 import { Users, UserPlus, Loader2, Shield, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import type { Usuario } from '../types';
+
+interface UsuarioLocal {
+  isAdmin: boolean;
+}
 
 export default function Usuarios() {
-  const [usuarios, setUsuarios] = useState([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
 
-  const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuario') || '{}') as UsuarioLocal;
 
   const carregarUsuarios = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/usuarios'); 
+      const response = await api.get<Usuario[]>('/usuarios');
       setUsuarios(response.data);
     } catch (err) {
       console.error("Erro ao carregar usuários:", err);
@@ -40,9 +45,9 @@ export default function Usuarios() {
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       <Sidebar />
-      
+
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 w-full transition-all">
-        
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -50,8 +55,8 @@ export default function Usuarios() {
             </h1>
             <p className="text-sm text-gray-500">Gerencie quem pode operar o sistema de estoque</p>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => setIsModalOpen(true)}
             className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-100 active:scale-95"
           >
@@ -105,8 +110,8 @@ export default function Usuarios() {
                         <td className="p-5">
                           <div className="flex justify-center">
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                              user.isAdmin 
-                              ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                              user.isAdmin
+                              ? 'bg-purple-100 text-purple-700 border border-purple-200'
                               : 'bg-blue-50 text-blue-700 border border-blue-100'
                             }`}>
                               {user.isAdmin && <Shield size={12} />}
@@ -124,7 +129,7 @@ export default function Usuarios() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="p-20 text-center text-gray-400 italic font-medium">
+                      <td colSpan={4} className="p-20 text-center text-gray-400 italic font-medium">
                         Nenhum usuário encontrado no banco de dados.
                       </td>
                     </tr>
@@ -136,10 +141,10 @@ export default function Usuarios() {
         </div>
       </main>
 
-      <CriarUsuario 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={carregarUsuarios} 
+      <CriarUsuario
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={carregarUsuarios}
       />
     </div>
   );

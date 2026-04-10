@@ -3,8 +3,9 @@ import Sidebar from '../components/Sidebar';
 import CriarNovoProduto from '../components/modals/CriarNovoProduto';
 import { Search, Plus, Edit, Trash2, PackageX, Loader2, CheckCircle, XCircle, X, Download } from 'lucide-react';
 import api from '../services/api';
+import type { Produto, Toast as ToastData } from '../types';
 
-function exportarProdutosCSV(produtos) {
+function exportarProdutosCSV(produtos: Produto[]) {
   const cabecalho = ['Nome', 'Categoria', 'Preço Custo', 'Preço Venda', 'Em Estoque', 'Estoque Mínimo', 'Status'];
   const linhas = produtos.map(p => [
     p.nome,
@@ -29,7 +30,13 @@ function exportarProdutosCSV(produtos) {
   URL.revokeObjectURL(url);
 }
 
-function Toast({ message, type, onClose }) {
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+function Toast({ message, type, onClose }: ToastProps) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
     return () => clearTimeout(t);
@@ -48,20 +55,20 @@ function Toast({ message, type, onClose }) {
 }
 
 export default function Produtos() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Produto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState<Produto | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<ToastData | null>(null);
 
-  const showToast = (message, type = 'success') => setToast({ message, type });
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => setToast({ message, type });
   const hideToast = () => setToast(null);
 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/produtos');
+      const response = await api.get<Produto[]>('/produtos');
       setProducts(response.data);
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
@@ -71,7 +78,6 @@ export default function Produtos() {
     }
   }, []);
 
-  // OUVINTE ADICIONADO AQUI 👇
   useEffect(() => {
     fetchProducts();
     window.addEventListener('movimentacao-registrada', fetchProducts);
@@ -80,7 +86,7 @@ export default function Produtos() {
     };
   }, [fetchProducts]);
 
-  const handleSaveProduct = async (dadosDoFormulario) => {
+  const handleSaveProduct = async (dadosDoFormulario: Omit<Produto, 'id'>) => {
     try {
       const payload = {
         nome: dadosDoFormulario.nome,
@@ -101,11 +107,12 @@ export default function Produtos() {
       setIsModalOpen(false);
       setEditingProduct(null);
     } catch (error) {
-      showToast(error.response?.data?.error || "Erro ao salvar o produto.", 'error');
+      const axiosErr = error as { response?: { data?: { error?: string } } };
+      showToast(axiosErr.response?.data?.error || "Erro ao salvar o produto.", 'error');
     }
   };
 
-  const handleDeleteProduct = async (id) => {
+  const handleDeleteProduct = async (id: number) => {
     if (!window.confirm('Tem certeza que deseja excluir este produto?')) return;
     try {
       await api.delete(`/produtos/${id}`);
@@ -237,7 +244,7 @@ export default function Produtos() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="p-24 text-center">
+                      <td colSpan={6} className="p-24 text-center">
                         <div className="flex flex-col items-center justify-center gap-3 text-gray-300">
                           <PackageX size={48} strokeWidth={1} />
                           <p className="text-gray-400 font-medium italic text-sm">Nenhum item encontrado no estoque.</p>

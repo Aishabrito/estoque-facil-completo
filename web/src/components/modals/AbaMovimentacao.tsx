@@ -1,10 +1,15 @@
 import { ArrowUpCircle, ArrowDownCircle, Loader2, Package, Hash, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
+import type { Produto } from '../../types';
 
-export default function AbaMovimentacao({ onClose }) {
-  const [products, setProducts] = useState([]);
-  const [type, setType] = useState('entrada');
+interface AbaMovimentacaoProps {
+  onClose: () => void;
+}
+
+export default function AbaMovimentacao({ onClose }: AbaMovimentacaoProps) {
+  const [products, setProducts] = useState<Produto[]>([]);
+  const [type, setType] = useState<'entrada' | 'saida'>('entrada');
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
@@ -12,12 +17,12 @@ export default function AbaMovimentacao({ onClose }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/produtos')
+    api.get<Produto[]>('/produtos')
       .then(res => setProducts(res.data))
       .catch(() => setError('Não foi possível carregar os produtos.'));
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -31,7 +36,8 @@ export default function AbaMovimentacao({ onClose }) {
       window.dispatchEvent(new Event('movimentacao-registrada'));
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao salvar movimentação.');
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || 'Erro ao salvar movimentação.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +109,7 @@ export default function AbaMovimentacao({ onClose }) {
         <div className="relative">
           <MessageSquare className="absolute left-3 top-3 text-gray-400" size={18} />
           <textarea
-            rows="2"
+            rows={2}
             className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/30 text-sm resize-none"
             placeholder="Ex: Reposição de estoque"
             value={reason}

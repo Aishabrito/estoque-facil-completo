@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { StockProvider } from './contexts/StockContext';
+import type { ReactNode } from 'react';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -10,14 +11,19 @@ import Configuracoes from './pages/Configuracoes';
 import Usuarios from './pages/Usuarios';
 import Vendas from './pages/Vendas';
 
-function PrivateRoute({ children, adminOnly = false }) {
+interface PrivateRouteProps {
+  children: ReactNode;
+  adminOnly?: boolean;
+}
+
+function PrivateRoute({ children, adminOnly = false }: PrivateRouteProps) {
   const token = localStorage.getItem('token');
-  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null') as { isAdmin: boolean } | null;
 
   if (!token || !usuario) return <Navigate to="/" replace />;
   if (adminOnly && !usuario.isAdmin) return <Navigate to="/dashboard" replace />;
 
-  return children;
+  return <>{children}</>;
 }
 
 function App() {
@@ -31,7 +37,7 @@ function App() {
           <Route path="/produtos"      element={<PrivateRoute><Produtos /></PrivateRoute>} />
           <Route path="/entradas"      element={<PrivateRoute><Entradas /></PrivateRoute>} />
           <Route path="/saidas"        element={<PrivateRoute><Saidas /></PrivateRoute>} />
-          <Route path="/vendas" element={<PrivateRoute><Vendas /></PrivateRoute>} />
+          <Route path="/vendas"        element={<PrivateRoute><Vendas /></PrivateRoute>} />
           <Route path="/configuracoes" element={<PrivateRoute><Configuracoes /></PrivateRoute>} />
           <Route path="/usuarios"      element={<PrivateRoute adminOnly={true}><Usuarios /></PrivateRoute>} />
 

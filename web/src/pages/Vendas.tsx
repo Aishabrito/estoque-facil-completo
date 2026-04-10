@@ -1,17 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'; // Adicionei useCallback
+import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import { ShoppingCart, Loader2, Receipt, Calendar, CreditCard, User, Box } from 'lucide-react';
 import api from '../services/api';
+import type { Venda } from '../types';
 
 export default function Vendas() {
-  const [vendas, setVendas] = useState([]);
+  const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Transformei em useCallback para podermos usar no useEffect de forma limpa
   const carregarVendas = useCallback(async () => {
     try {
-      // O loading só aparece na primeira vez para não ficar piscando a tela depois
-      const response = await api.get('/vendas');
+      const response = await api.get<Venda[]>('/vendas');
       setVendas(response.data);
     } catch (error) {
       console.error("Erro ao carregar vendas:", error);
@@ -21,26 +20,21 @@ export default function Vendas() {
   }, []);
 
   useEffect(() => {
-    // Carrega ao montar a tela
     carregarVendas();
-
-    // ⚡ O PULO DO GATO: Ouvinte de novas vendas
     window.addEventListener('movimentacao-registrada', carregarVendas);
-    
-    // Limpa o ouvinte quando sair da tela
     return () => {
       window.removeEventListener('movimentacao-registrada', carregarVendas);
     };
   }, [carregarVendas]);
 
-  const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const dataFmt = (dataIso) => new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const fmt = (val: number | string) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const dataFmt = (dataIso: string) => new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       <Sidebar />
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 w-full transition-all">
-        
+
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
             <Receipt size={24} />
@@ -66,7 +60,7 @@ export default function Vendas() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {vendas.map((venda) => (
               <div key={venda.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                
+
                 {/* Cabeçalho do Recibo */}
                 <div className="p-5 border-b border-gray-100 bg-emerald-50/30 flex items-center justify-between">
                   <div>
@@ -103,7 +97,7 @@ export default function Vendas() {
                           </div>
                         </div>
                         <span className="text-sm font-bold text-gray-900 shrink-0">
-                          {fmt(item.quantidade * item.precoNoMomento)}
+                          {fmt(item.quantidade * Number(item.precoNoMomento))}
                         </span>
                       </li>
                     ))}

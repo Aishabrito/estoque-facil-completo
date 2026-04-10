@@ -5,8 +5,9 @@ import {
   Loader2, Search, TrendingDown, Download, ShoppingCart
 } from 'lucide-react';
 import api from '../services/api';
+import type { Movimentacao } from '../types';
 
-function exportarCSV(dados, nomeArquivo) {
+function exportarCSV(dados: Movimentacao[], nomeArquivo: string) {
   const cabecalho = ['Produto', 'Quantidade', 'Motivo', 'Tipo', 'Realizado por', 'Cargo', 'Data'];
   const linhas = dados.map(item => [
     item.produto?.nome || 'Produto Excluído',
@@ -31,16 +32,18 @@ function exportarCSV(dados, nomeArquivo) {
   URL.revokeObjectURL(url);
 }
 
+type FiltroTipo = 'todos' | 'venda' | 'avulsa';
+
 export default function Saidas() {
-  const [saidas, setSaidas] = useState([]);
+  const [saidas, setSaidas] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('todos'); // 'todos' | 'venda' | 'avulsa'
+  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>('todos');
 
   useEffect(() => {
     async function carregar() {
       try {
-        const response = await api.get('/movimentacoes');
+        const response = await api.get<Movimentacao[]>('/movimentacoes');
         setSaidas(response.data.filter(m => m.tipo?.toUpperCase() === 'SAIDA'));
       } catch (err) {
         console.error("Erro ao carregar saídas:", err);
@@ -54,7 +57,7 @@ export default function Saidas() {
     return () => window.removeEventListener('movimentacao-registrada', carregar);
   }, []);
 
-  const isVenda = (item) => item.motivo?.startsWith('Venda #');
+  const isVenda = (item: Movimentacao) => item.motivo?.startsWith('Venda #');
 
   const totalItens = saidas.reduce((acc, item) => acc + item.qtd, 0);
   const totalVendas = saidas.filter(isVenda).length;
@@ -140,11 +143,11 @@ export default function Saidas() {
           </div>
 
           <div className="flex gap-2 shrink-0">
-            {[
+            {([
               { value: 'todos',   label: 'Todos' },
               { value: 'venda',   label: 'Vendas PDV' },
               { value: 'avulsa',  label: 'Saídas Avulsas' },
-            ].map(({ value, label }) => (
+            ] as { value: FiltroTipo; label: string }[]).map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setFiltroTipo(value)}
@@ -176,7 +179,7 @@ export default function Saidas() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan="6" className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-red-500" size={28} /></td></tr>
+                  <tr><td colSpan={6} className="p-16 text-center"><Loader2 className="animate-spin mx-auto text-red-500" size={28} /></td></tr>
                 ) : filtradas.length > 0 ? (
                   filtradas.map((item) => (
                     <tr key={item.id} className="hover:bg-red-50/20 transition-colors">
@@ -229,7 +232,7 @@ export default function Saidas() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="p-16 text-center text-gray-400">
+                    <td colSpan={6} className="p-16 text-center text-gray-400">
                       <div className="flex flex-col items-center gap-3">
                         <PackageOpen size={40} strokeWidth={1.5} />
                         <p className="font-medium italic text-sm">Nenhuma saída encontrada.</p>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // ✅ Se estiver na Vercel, ele usa a URL do Render. 
+  // ✅ Se estiver na Vercel, ele usa a URL do Render.
   // 🏠 Se estiver no seu VS Code, ele usa o localhost.
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002',
 });
@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
 // Se o token expirar (401), desloga automaticamente
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: { response?: { status: number } }) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');

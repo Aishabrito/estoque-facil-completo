@@ -1,8 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import type { Request, Response } from 'express';
+
 const prisma = new PrismaClient();
 
+interface ItemCarrinho {
+  produtoId: string | number;
+  quantidade: string | number;
+  precoNoMomento: string | number;
+}
+
 export default {
-  async listar(req, res) {
+  async listar(_req: Request, res: Response): Promise<Response> {
     try {
       const vendas = await prisma.venda.findMany({
         orderBy: { data: 'desc' },
@@ -16,17 +24,24 @@ export default {
         }
       });
       return res.json(vendas);
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: 'Erro ao buscar vendas.' });
     }
   },
 
-  async criar(req, res) {
-    const { itens, formaPagamento } = req.body;
+  async criar(req: Request, res: Response): Promise<Response> {
+    const { itens, formaPagamento } = req.body as {
+      itens: ItemCarrinho[];
+      formaPagamento?: string;
+    };
     const usuarioId = req.usuarioId;
 
     if (!itens || !Array.isArray(itens) || itens.length === 0) {
       return res.status(400).json({ error: 'Carrinho vazio.' });
+    }
+
+    if (usuarioId === undefined) {
+      return res.status(401).json({ error: 'Usuário não autenticado.' });
     }
 
     try {
@@ -92,7 +107,7 @@ export default {
 
       return res.status(201).json(resultado);
     } catch (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ error: (error as Error).message });
     }
   }
 };

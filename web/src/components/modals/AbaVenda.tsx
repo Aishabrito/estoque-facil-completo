@@ -1,22 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart,
-  CheckCircle, Loader2, CreditCard, Banknote, QrCode
+  CheckCircle, Loader2, CreditCard, Banknote, QrCode,
+  type LucideIcon,
 } from 'lucide-react';
 import api from '../../services/api';
+import type { Produto, CartItem } from '../../types';
 
-const FORMAS_PAGAMENTO = [
+interface FormaPagamento {
+  value: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const FORMAS_PAGAMENTO: FormaPagamento[] = [
   { value: 'dinheiro', label: 'Dinheiro', icon: Banknote },
   { value: 'cartao',   label: 'Cartão',   icon: CreditCard },
   { value: 'pix',      label: 'Pix',      icon: QrCode },
 ];
 
-const fmt = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmt = (val: number | string) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export default function AbaVenda({ onClose }) {
-  const [produtos, setProdutos] = useState([]);
+interface AbaVendaProps {
+  onClose: () => void;
+}
+
+export default function AbaVenda({ onClose }: AbaVendaProps) {
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [busca, setBusca] = useState('');
-  const [carrinho, setCarrinho] = useState([]);
+  const [carrinho, setCarrinho] = useState<CartItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState('dinheiro');
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
@@ -24,15 +36,15 @@ export default function AbaVenda({ onClose }) {
 
   const carregarProdutos = useCallback(async () => {
     try {
-      const res = await api.get('/produtos');
+      const res = await api.get<Produto[]>('/produtos');
       setProdutos(res.data);
     } catch {
       setError('Não foi possível carregar os produtos.');
     }
   }, []);
 
-  useEffect(() => { 
-    carregarProdutos(); 
+  useEffect(() => {
+    carregarProdutos();
   }, [carregarProdutos]);
 
   const produtosFiltrados = produtos.filter(p =>
@@ -40,7 +52,7 @@ export default function AbaVenda({ onClose }) {
     p.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const adicionarAoCarrinho = (produto) => {
+  const adicionarAoCarrinho = (produto: Produto) => {
     setCarrinho(prev => {
       const existe = prev.find(i => i.produtoId === produto.id);
       if (existe) {
@@ -61,7 +73,7 @@ export default function AbaVenda({ onClose }) {
     });
   };
 
-  const alterarQuantidade = (produtoId, delta) => {
+  const alterarQuantidade = (produtoId: number, delta: number) => {
     setCarrinho(prev => prev.map(i =>
       i.produtoId === produtoId
         ? { ...i, quantidade: Math.min(Math.max(1, i.quantidade + delta), i.estoqueDisponivel) }
@@ -69,11 +81,11 @@ export default function AbaVenda({ onClose }) {
     ));
   };
 
-  const removerDoCarrinho = (produtoId) => {
+  const removerDoCarrinho = (produtoId: number) => {
     setCarrinho(prev => prev.filter(i => i.produtoId !== produtoId));
   };
 
-  const subtotal = (item) => item.precoNoMomento * item.quantidade;
+  const subtotal = (item: CartItem) => item.precoNoMomento * item.quantidade;
   const totalGeral = carrinho.reduce((acc, item) => acc + subtotal(item), 0);
   const totalItens = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
 
@@ -93,7 +105,7 @@ export default function AbaVenda({ onClose }) {
 
       // ✅ MÁGICA: Avisa o Dashboard e o Histórico para se atualizarem
       window.dispatchEvent(new CustomEvent('movimentacao-registrada'));
-      
+
       // ✅ Atualiza a lista de produtos (estoque) localmente
       carregarProdutos();
 
@@ -107,7 +119,8 @@ export default function AbaVenda({ onClose }) {
       }, 2000);
 
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao finalizar venda.');
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setError(axiosErr.response?.data?.error || 'Erro ao finalizar venda.');
     } finally {
       setLoading(false);
     }
