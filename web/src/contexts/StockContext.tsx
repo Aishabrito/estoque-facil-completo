@@ -8,6 +8,7 @@ interface StockContextValue {
   loading: boolean;
   refreshData: () => Promise<void>;
   logout: () => void;
+  clearAllData: () => void;
 }
 
 const StockContext = createContext<StockContextValue | undefined>(undefined);
@@ -54,8 +55,12 @@ export function StockProvider({ children }: StockProviderProps) {
     window.location.href = '/';
   };
 
+  const clearAllData = () => {
+    logout();
+  };
+
   return (
-    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout }}>
+    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout, clearAllData }}>
       {children}
     </StockContext.Provider>
   );
