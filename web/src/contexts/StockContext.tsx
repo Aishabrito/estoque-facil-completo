@@ -1,23 +1,13 @@
-<<<<<<< Updated upstream
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-=======
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
->>>>>>> Stashed changes
 import api from '../services/api';
 
-<<<<<<< Updated upstream
-const StockContext = createContext();
-
-export function StockProvider({ children }) {
-  const [products, setProducts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-=======
 interface StockContextValue {
   products: Produto[];
   transactions: Movimentacao[];
   loading: boolean;
   refreshData: () => Promise<void>;
   logout: () => void;
+  clearAllData: () => Promise<void>;
 }
 
 const StockContext = createContext<StockContextValue | undefined>(undefined);
@@ -29,7 +19,6 @@ interface StockProviderProps {
 export function StockProvider({ children }: StockProviderProps) {
   const [products, setProducts] = useState<Produto[]>([]);
   const [transactions, setTransactions] = useState<Movimentacao[]>([]);
->>>>>>> Stashed changes
   const [loading, setLoading] = useState(true);
 
   const refreshData = useCallback(async () => {
@@ -84,12 +73,6 @@ export function StockProvider({ children }: StockProviderProps) {
   );
 }
 
-<<<<<<< Updated upstream
-// eslint-disable-next-line react-refresh/only-export-components
-export function useStock() {
-  return useContext(StockContext);
-}
-=======
 // Exportado separado para satisfazer o react-refresh/only-export-components
 export function useStock(): StockContextValue {
   const context = useContext(StockContext);
@@ -98,4 +81,3 @@ export function useStock(): StockContextValue {
   }
   return context;
 }
->>>>>>> Stashed changes
