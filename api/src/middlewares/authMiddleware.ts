@@ -16,7 +16,7 @@ export const verificarToken = (req: Request, res: Response, next: NextFunction):
   }
 
   // O padrão é vir escrito "Bearer meutoken123", então separamos para pegar só o token
-  const [, token] = authHeader.split(' ');
+  const [, token] = authHeader.split(' '
 
   try {
     const secret = process.env.JWT_SECRET;
@@ -24,7 +24,6 @@ export const verificarToken = (req: Request, res: Response, next: NextFunction):
       return res.status(500).json({ error: 'Configuração do servidor incompleta. JWT_SECRET não definido.' });
     }
     // Tenta decifrar o token usando a sua senha secreta do .env
-    const decodificado = jwt.verify(token, secret);
     
     const decodificado = jwt.verify(
       token,
