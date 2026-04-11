@@ -1,11 +1,21 @@
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, type ReactNode } from 'react';
 import api from '../services/api';
+import type { Produto, Movimentacao } from '../types';
 
-const StockContext = createContext();
+interface StockContextValue {
+  products: Produto[];
+  transactions: Movimentacao[];
+  loading: boolean;
+  refreshData: () => Promise<void>;
+  logout: () => void;
+  clearAllData: () => void;
+}
 
-export function StockProvider({ children }) {
-  const [products, setProducts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+const StockContext = createContext<StockContextValue | undefined>(undefined);
+
+export function StockProvider({ children }: { children: ReactNode }) {
+  const [products, setProducts] = useState<Produto[]>([]);
+  const [transactions, setTransactions] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refreshData = useCallback(async () => {
@@ -61,6 +71,8 @@ export function StockProvider({ children }) {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function useStock() {
-  return useContext(StockContext);
+export function useStock(): StockContextValue {
+  const context = useContext(StockContext);
+  if (!context) throw new Error('useStock must be used within a StockProvider');
+  return context;
 }
