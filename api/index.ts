@@ -19,7 +19,7 @@ app.options('*', cors());
 app.use(express.json());
 
 // ✅ Health check — o Render bate aqui para saber se o servidor está vivo
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
@@ -28,20 +28,20 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(rotas);
 
-// Tratamento de erros (estava ótimo, mantive igual)
-app.use((err, req, res, next) => {
+// Tratamento de erros
+app.use((err: Error & { code?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('❌ Erro detectado:', err.message);
-  
+
   if (err.code === 'P2002') {
     return res.status(400).json({ error: 'Este registro já existe no sistema.' });
   }
 
-  res.status(500).json({ 
-    error: 'Ocorreu um erro interno no servidor. Verifique os logs no Render.' 
+  return res.status(500).json({
+    error: 'Ocorreu um erro interno no servidor. Verifique os logs no Render.'
   });
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = Number(process.env.PORT) || 3002;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✅ API Profissional Rodando!`);

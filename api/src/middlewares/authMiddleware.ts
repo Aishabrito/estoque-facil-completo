@@ -1,7 +1,13 @@
 import jwt from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from 'express';
+
+interface JwtPayload {
+  id: number;
+  isAdmin: boolean;
+}
 
 // 1. Verifica se a pessoa tem a chave para entrar no sistema
-export const verificarToken = (req, res, next) => {
+export const verificarToken = (req: Request, res: Response, next: NextFunction): Response | void => {
   // O token geralmente vem no cabeçalho (Header) da requisição
   const authHeader = req.headers.authorization;
 
@@ -20,18 +26,23 @@ export const verificarToken = (req, res, next) => {
     // Tenta decifrar o token usando a sua senha secreta do .env
     const decodificado = jwt.verify(token, secret);
     
+    const decodificado = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'segredo_padrao_para_desenvolvimento'
+    ) as JwtPayload;
+
     // Guarda os dados do usuário (id, isAdmin) dentro da requisição para as próximas funções usarem
     req.usuarioId = decodificado.id;
     req.isAdmin = decodificado.isAdmin;
 
     return next(); // Pode passar!
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: 'Token inválido ou expirado.' });
   }
 };
 
 // 2. Verifica se a pessoa é O CHEFE (Admin)
-export const verificarAdmin = (req, res, next) => {
+export const verificarAdmin = (req: Request, res: Response, next: NextFunction): Response | void => {
   if (!req.isAdmin) {
     return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem realizar esta ação.' });
   }

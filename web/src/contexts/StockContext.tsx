@@ -1,11 +1,35 @@
+<<<<<<< Updated upstream
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+=======
+import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
+>>>>>>> Stashed changes
 import api from '../services/api';
 
+<<<<<<< Updated upstream
 const StockContext = createContext();
 
 export function StockProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+=======
+interface StockContextValue {
+  products: Produto[];
+  transactions: Movimentacao[];
+  loading: boolean;
+  refreshData: () => Promise<void>;
+  logout: () => void;
+}
+
+const StockContext = createContext<StockContextValue | undefined>(undefined);
+
+interface StockProviderProps {
+  children: ReactNode;
+}
+
+export function StockProvider({ children }: StockProviderProps) {
+  const [products, setProducts] = useState<Produto[]>([]);
+  const [transactions, setTransactions] = useState<Movimentacao[]>([]);
+>>>>>>> Stashed changes
   const [loading, setLoading] = useState(true);
 
   const refreshData = useCallback(async () => {
@@ -14,8 +38,8 @@ export function StockProvider({ children }) {
     try {
       setLoading(true);
       const [prodRes, transRes] = await Promise.all([
-        api.get('/produtos'),
-        api.get('/movimentacoes'),
+        api.get<Produto[]>('/produtos'),
+        api.get<Movimentacao[]>('/movimentacoes'),
       ]);
       setProducts(prodRes.data);
       setTransactions(transRes.data);
@@ -60,7 +84,18 @@ export function StockProvider({ children }) {
   );
 }
 
+<<<<<<< Updated upstream
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStock() {
   return useContext(StockContext);
 }
+=======
+// Exportado separado para satisfazer o react-refresh/only-export-components
+export function useStock(): StockContextValue {
+  const context = useContext(StockContext);
+  if (!context) {
+    throw new Error('useStock must be used within a StockProvider');
+  }
+  return context;
+}
+>>>>>>> Stashed changes
