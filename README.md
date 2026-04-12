@@ -31,7 +31,7 @@ O sistema possui controle de acesso por perfil (RBAC). Para explorar todas as fu
 
 | Perfil | E-mail | Senha |
 |--------|--------|-------|
-| **Administrador** | `demo@estoquefacil.com` | `demo123` |
+| **Administrador** | `demonstracao@estoquefacil.com` | `demo123` |
 
 ---
 
