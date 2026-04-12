@@ -16,7 +16,7 @@ export const verificarToken = (req: Request, res: Response, next: NextFunction):
   }
 
   // O padrão é vir escrito "Bearer meutoken123", então separamos para pegar só o token
-  const [, token] = authHeader.split(' '
+  const [, token] = authHeader.split(' ')
 
   try {
     const secret = process.env.JWT_SECRET;
