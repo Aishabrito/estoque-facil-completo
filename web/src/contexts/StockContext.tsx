@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
 import api from '../services/api';
+import type { Produto, Movimentacao } from '../types';
 
 interface StockContextValue {
   products: Produto[];
@@ -55,7 +56,7 @@ export function StockProvider({ children }: StockProviderProps) {
       await refreshData();
     } catch (error) {
       console.error('Erro ao resetar dados:', error);
-      const msg = error?.response?.data?.error || 'Verifique se o servidor está disponível.';
+      const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Verifique se o servidor está disponível.';
       alert(`Não foi possível resetar. ${msg}`);
     }
   }, [refreshData]);

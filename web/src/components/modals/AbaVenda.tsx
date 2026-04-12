@@ -252,7 +252,7 @@ export default function AbaVenda({ onClose }: AbaVendaProps) {
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Forma de Pagamento</p>
             <div className="grid grid-cols-3 gap-2">
-              {FORMAS_PAGAMENTO.map(({ value, label, icon: Icon }) => ( // eslint-disable-line no-unused-vars
+              {FORMAS_PAGAMENTO.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
