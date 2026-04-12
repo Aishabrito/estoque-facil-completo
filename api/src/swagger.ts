@@ -153,99 +153,6 @@ const options = {
           },
         },
       },
-      '/produtos': {
-        get: {
-          tags: ['Produtos'],
-          summary: 'Lista todos os produtos',
-          responses: {
-            200: { description: 'Lista de produtos', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Produto' } } } } },
-          },
-        },
-        post: {
-          tags: ['Produtos'],
-          summary: 'Cria um novo produto',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['nome', 'preco'],
-                  properties: {
-                    nome: { type: 'string' },
-                    categoria: { type: 'string' },
-                    precoCusto: { type: 'number' },
-                    preco: { type: 'number' },
-                    estoque: { type: 'integer' },
-                    estoqueMinimo: { type: 'integer' },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            201: { description: 'Produto criado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Produto' } } } },
-          },
-        },
-      },
-      '/produtos/{id}': {
-        put: {
-          tags: ['Produtos'],
-          summary: 'Atualiza dados de um produto',
-          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-          requestBody: {
-            content: {
-              'application/json': { schema: { $ref: '#/components/schemas/Produto' } },
-            },
-          },
-          responses: {
-            200: { description: 'Produto atualizado' },
-            404: { description: 'Produto não encontrado' },
-          },
-        },
-        delete: {
-          tags: ['Produtos'],
-          summary: 'Exclui um produto e seu histórico',
-          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-          responses: {
-            204: { description: 'Produto excluído' },
-            404: { description: 'Produto não encontrado' },
-          },
-        },
-      },
-      '/movimentacoes': {
-        get: {
-          tags: ['Movimentações'],
-          summary: 'Lista todo o histórico de entradas e saídas',
-          responses: {
-            200: { description: 'Lista de movimentações', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Movimentacao' } } } } },
-          },
-        },
-        post: {
-          tags: ['Movimentações'],
-          summary: 'Registra uma entrada ou saída de estoque',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  required: ['tipo', 'qtd', 'produtoId'],
-                  properties: {
-                    tipo: { type: 'string', enum: ['ENTRADA', 'SAIDA'] },
-                    qtd: { type: 'integer' },
-                    motivo: { type: 'string' },
-                    produtoId: { type: 'integer' },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            201: { description: 'Movimentação registrada' },
-          },
-        },
-      },
       '/vendas': {
         get: {
           tags: ['Vendas'],
@@ -284,31 +191,6 @@ const options = {
           },
           responses: {
             201: { description: 'Venda registrada com baixa automática no estoque' },
-          },
-        },
-      },
-      '/dashboard': {
-        get: {
-          tags: ['Dashboard'],
-          summary: 'Retorna indicadores de patrimônio, lucro e alertas de reposição',
-          responses: {
-            200: {
-              description: 'Resumo do dashboard',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      totalProdutos: { type: 'integer' },
-                      valorTotalEstoque: { type: 'number' },
-                      receitaPotencial: { type: 'number' },
-                      lucroPotencial: { type: 'number' },
-                      produtosAbaixoMinimo: { type: 'array', items: { $ref: '#/components/schemas/Produto' } },
-                    },
-                  },
-                },
-              },
-            },
           },
         },
       },
@@ -425,7 +307,7 @@ const options = {
       },
     },
   },
-  apis: [],
+  apis: ['./src/routes/index.ts'],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
