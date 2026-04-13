@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { Router } from 'express';
+import swaggerUi from 'swagger-ui-express'; 
 import { ProdutoController } from './controllers/ProdutoController.js';
 import MovimentacaoController from './controllers/MovimentacaoController.js';
 import DashboardController from './controllers/DashboardController.js';
 import { swaggerSpec } from './swagger.js';
 
 const routes = Router();
+
 const produtoController = new ProdutoController();
 
 routes.get('/produtos', produtoController.listar.bind(produtoController));
@@ -22,9 +24,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Documentação Swagger (Mantida!)
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 console.log('Swagger spec loaded:', swaggerSpec);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rotas do sistema
 app.use(routes);
@@ -45,4 +46,5 @@ app.use((err: Error & { code?: string }, _req: express.Request, res: express.Res
 const PORT = 3002;
 app.listen(PORT, () => {
   console.log(`\n🚀 API rodando em http://localhost:${PORT}`);
+  console.log(`📚 Documentação do Swagger disponível em http://localhost:${PORT}/api-docs`); 
 });
