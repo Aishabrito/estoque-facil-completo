@@ -7,13 +7,18 @@ const ADMIN_NOME = process.env.ADMIN_NOME || 'Administrador';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@estoquefacil.com';
 const ADMIN_SENHA = process.env.ADMIN_SENHA;
 
+// O TypeScript precisa de uma garantia de que ADMIN_SENHA é string
 if (!ADMIN_SENHA) {
   console.error('❌ ADMIN_SENHA não definida. Configure a variável de ambiente antes de executar.');
   process.exit(1);
 }
 
+// Criamos uma variável tipada para garantir que não é undefined
+const senhaParaHash: string = ADMIN_SENHA;
+
 async function main() {
-  const hashGerado = await bcrypt.hash(ADMIN_SENHA, 10);
+  // Forçamos o TypeScript a entender que o resultado é uma string
+  const hashGerado: string = await bcrypt.hash(senhaParaHash, 10);
 
   const admin = await prisma.usuario.upsert({
     where: { email: ADMIN_EMAIL },
@@ -35,6 +40,10 @@ async function main() {
 }
 
 main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });

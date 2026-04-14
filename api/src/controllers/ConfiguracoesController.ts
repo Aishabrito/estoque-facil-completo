@@ -49,8 +49,7 @@ export default {
       return res.status(500).json({ error: 'Erro ao salvar configurações.' });
     }
   },
-
-  async resetar(req, res) {
+  async resetar(req: Request, res: Response): Promise<Response> {
     try {
       // Apaga na ordem correta respeitando as foreign keys, dentro de uma transação atômica
       await prisma.$transaction([
