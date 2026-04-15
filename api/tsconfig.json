@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": ["src/**/*", "index.ts", "criarAdmin.ts"],
+  "include": ["src/**/*", "index.ts", "src/scripts/criarAdmin.ts"],
   "exclude": ["node_modules", "dist"]
 }

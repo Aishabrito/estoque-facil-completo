@@ -8,7 +8,6 @@ export default {
     try {
       let config = await prisma.configuracoes.findUnique({ where: { id: 1 } });
 
-      // Cria com valores padrão se não existir
       if (!config) {
         config = await prisma.configuracoes.create({
           data: { id: 1, margemLucro: 30, impostos: 15, custoOperacional: 10 }
@@ -49,9 +48,9 @@ export default {
       return res.status(500).json({ error: 'Erro ao salvar configurações.' });
     }
   },
+
   async resetar(req: Request, res: Response): Promise<Response> {
     try {
-      // Apaga na ordem correta respeitando as foreign keys, dentro de uma transação atômica
       await prisma.$transaction([
         prisma.itemVenda.deleteMany({}),
         prisma.venda.deleteMany({}),
