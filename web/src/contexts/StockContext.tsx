@@ -2,10 +2,20 @@ import { createContext, useState, useContext, useEffect, useCallback, ReactNode 
 import api from '../services/api';
 import { Produto, Movimentacao } from '../types';
 
+// 1. Definindo o formato do usuário logado
+export interface Usuario {
+  id: number;
+  nome: string;
+  email: string;
+  isAdmin: boolean;
+}
+
 interface StockContextValue {
   products: Produto[];
   transactions: Movimentacao[];
   loading: boolean;
+  user: Usuario | null;     // <-- Adicionado
+  token: string | null;     // <-- Adicionado
   refreshData: () => Promise<void>;
   logout: () => void;
   clearAllData: () => Promise<void>;
@@ -22,9 +32,19 @@ export function StockProvider({ children }: StockProviderProps) {
   const [transactions, setTransactions] = useState<Movimentacao[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 2. Buscando o usuário e token do localStorage
+  const [user] = useState<Usuario | null>(() => {
+    const usuarioSalvo = localStorage.getItem('usuario');
+    return usuarioSalvo ? JSON.parse(usuarioSalvo) : null;
+  });
+
+  const [token] = useState<string | null>(() => {
+    return localStorage.getItem('token');
+  });
+
   const refreshData = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) return;
     try {
       setLoading(true);
       const [prodRes, transRes] = await Promise.all([
@@ -69,7 +89,8 @@ export function StockProvider({ children }: StockProviderProps) {
   };
 
   return (
-    <StockContext.Provider value={{ products, transactions, loading, refreshData, logout, clearAllData }}>
+    // 3. Exportando o user e o token para a aplicação inteira
+    <StockContext.Provider value={{ products, transactions, loading, user, token, refreshData, logout, clearAllData }}>
       {children}
     </StockContext.Provider>
   );

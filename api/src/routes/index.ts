@@ -8,6 +8,9 @@ import DashboardController from '../controllers/DashboardController.js';
 import ConfiguracoesController from '../controllers/ConfiguracoesController.js';
 import { verificarToken, verificarAdmin } from '../middlewares/authMiddleware.js';
 import VendaController from '../controllers/VendaController.js';
+import { PrismaClient } from '@prisma/client'; 
+
+const prisma = new PrismaClient();
 
 const routes = Router();
 const produtoController = new ProdutoController();
@@ -471,6 +474,21 @@ routes.post('/usuarios', verificarAdmin, AuthController.registrar);
 routes.put('/usuarios/:id', verificarAdmin, AuthController.atualizarUsuario);
 
 // Excluir membro da equipe
-routes.delete('/usuarios/:id', verificarAdmin, AuthController.excluirUsuario);
+routes.delete('/usuarios/:id', verificarAdmin, AuthController.excluirUsuario); 
+
+// ==========================================
+// ⏰ ROTA DE KEEP-ALIVE (Evita hibernação)
+// ==========================================
+routes.get('/keep-alive', async (req, res) => { 
+  try {
+    // Faz uma consulta super leve no banco (pega só 1 usuário)
+    // Isso conta como "atividade" para o Supabase
+    await prisma.usuario.findFirst(); 
+    
+    return res.status(200).json({ status: 'API e Banco estão vivos!' });
+  } catch (error) {
+    return res.status(500).json({ erro: 'Falha ao conectar no banco' });
+  }
+});
 
 export default routes;
