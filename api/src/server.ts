@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express'; 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 import { ProdutoController } from './controllers/ProdutoController.js';
 import MovimentacaoController from './controllers/MovimentacaoController.js';
 import DashboardController from './controllers/DashboardController.js';
